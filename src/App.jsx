@@ -1,4 +1,39 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+const STEP_INTERVAL_MS = 1000;
+const INITIAL_LIVE_CHANCE = 0.12;
+const AGE_COLORS = [
+  "#A3B18A",
+  "#588157",
+  "#3A5A40",
+  "#344E41",
+];
+const AGE_COLOR_CYCLE = [
+  "#A3B18A",
+  "#588157",
+  "#3A5A40",
+  "#344E41",
+  "#3A5A40",
+  "#588157",
+  "#A3B18A",
+];
+const DESKTOP_CONTENT_PADDING = 64;
+const MOBILE_CONTENT_PADDING = 36;
+const DESKTOP_TOPBAR_HEIGHT = 92;
+const MOBILE_TOPBAR_HEIGHT = 118;
+const DESKTOP_LIFE_HORIZONTAL_PADDING = 56;
+const MOBILE_LIFE_HORIZONTAL_PADDING = 20;
+const DESKTOP_LIFE_TOP_PADDING = 24;
+const MOBILE_LIFE_TOP_PADDING = 12;
+const DESKTOP_LIFE_BOTTOM_PADDING = 88;
+const MOBILE_LIFE_BOTTOM_PADDING = 52;
+const CLICK_PATTERN = [
+  [0, 0],
+  [1, 0],
+  [2, 0],
+  [2, -1],
+  [1, -2],
+];
 
 const cvSections = [
   {
@@ -31,7 +66,7 @@ const cvSections = [
     ],
   },
   {
-    title: "Professional Experience",
+    title: "Experience",
     entries: [
       {
         heading: "Role Title Placeholder",
@@ -111,64 +146,59 @@ const cvSections = [
   },
 ];
 
-const contributionLevels = [
-  0, 1, 2, 0, 3, 1, 0, 2, 4, 1, 0, 3, 2, 1, 0, 2, 3, 4, 1, 0, 2, 1, 3, 0, 4,
-  2, 1, 0, 3, 2, 1, 4, 0, 2, 1, 3, 0, 4, 2, 1, 0, 3, 2, 1, 4, 0, 2, 1, 3, 0,
-  4, 2, 1, 0, 2, 3, 1, 4, 0, 1, 2, 3, 0, 4, 1, 2, 3, 0, 1, 4, 2, 3, 1, 0, 2,
-  4, 1, 3, 0, 2, 1, 4, 3,
+const projectTiles = [
+  {
+    title: "Project One",
+    description:
+      "Add a short overview of what this project does, who it serves, and why it matters.",
+  },
+  {
+    title: "Project Two",
+    description:
+      "Use this card for another build, experiment, app, website, or creative technical project.",
+  },
+  {
+    title: "Project Three",
+    description:
+      "Summarize the main idea, your role, and one standout implementation detail here.",
+  },
+  {
+    title: "Project Four",
+    description:
+      "Good place for a portfolio item with a clear problem, process, and outcome.",
+  },
 ];
 
-const projectGroups = [
+const githubActivityLevels = [
+  0, 1, 2, 3, 1, 0, 2, 3, 2, 1, 0, 1, 2, 3, 0, 1, 2, 2, 3, 1, 0, 1, 2, 3, 1,
+  0, 1, 2, 3, 2, 1, 0, 1, 3, 2, 1, 0, 2, 3, 1, 0, 1, 2, 3, 2, 1, 0, 2, 3, 2,
+  1, 0, 1, 2, 3, 1, 0, 2, 3, 2,
+];
+
+const contactItems = [
   {
-    title: "Current Projects",
-    items: [
-      {
-        name: "Current Project Placeholder",
-        status: "In Progress",
-        description:
-          "Use this slot for the thing you are actively building right now.",
-      },
-      {
-        name: "Second Current Project",
-        status: "Iterating",
-        description:
-          "Add a short summary, what stage it is in, and what you are focused on next.",
-      },
-    ],
+    label: "LinkedIn",
+    href: "https://linkedin.com/in/yourname",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M6.94 8.5H3.56V20h3.38V8.5ZM5.25 3A1.97 1.97 0 1 0 5.3 6.94 1.97 1.97 0 0 0 5.25 3ZM20.44 12.94c0-3.47-1.85-5.08-4.33-5.08-2 0-2.9 1.1-3.4 1.87V8.5H9.33V20h3.38v-6.4c0-1.69.32-3.31 2.41-3.31 2.06 0 2.09 1.93 2.09 3.42V20h3.38v-7.06Z"
+          fill="currentColor"
+        />
+      </svg>
+    ),
   },
   {
-    title: "Favorite Projects",
-    items: [
-      {
-        name: "Favorite Project Placeholder",
-        status: "Featured",
-        description:
-          "Highlight something you are especially proud of and why it matters to you.",
-      },
-      {
-        name: "Another Favorite",
-        status: "Featured",
-        description:
-          "Good spot for a project with strong visuals, impact, or a fun technical story.",
-      },
-    ],
-  },
-  {
-    title: "Other Projects",
-    items: [
-      {
-        name: "Project Archive Placeholder",
-        status: "Past Work",
-        description:
-          "Use this section for experiments, class work, prototypes, or smaller builds.",
-      },
-      {
-        name: "Additional Project",
-        status: "Past Work",
-        description:
-          "You can keep this category broad so the main featured work stays focused above.",
-      },
-    ],
+    label: "GitHub",
+    href: "https://github.com/yourusername",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.25.79-.56v-2.17c-3.21.7-3.89-1.36-3.89-1.36-.52-1.34-1.28-1.7-1.28-1.7-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.25 3.33.95.1-.74.4-1.25.72-1.54-2.56-.29-5.25-1.28-5.25-5.69 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.19 1.18a10.96 10.96 0 0 1 5.8 0c2.21-1.5 3.18-1.18 3.18-1.18.63 1.58.24 2.75.12 3.04.73.81 1.17 1.83 1.17 3.09 0 4.42-2.69 5.39-5.26 5.67.41.36.77 1.06.77 2.14v3.17c0 .31.2.68.8.56A11.5 11.5 0 0 0 12 .5Z"
+          fill="currentColor"
+        />
+      </svg>
+    ),
   },
 ];
 
@@ -176,12 +206,6 @@ const pages = {
   home: {
     key: "home",
     label: "Home",
-    eyebrow: "Personal Website Framework",
-    title: "Clean, simple, and ready for your content.",
-    body:
-      "Replace the placeholder name, personalize each page, and you will have a polished website structure that feels easy to expand.",
-    accent:
-      "This homepage is now its own view, separate from the other pages in the navigation.",
   },
   about: {
     key: "about",
@@ -232,6 +256,136 @@ const navItems = [
   { label: "Contact Me", hash: "#contact", page: "contact" },
 ];
 
+function createEmptyGrid(columns, rows) {
+  return Array.from({ length: columns * rows }, () => 0);
+}
+
+function createRandomGrid(columns, rows) {
+  const grid = Array.from(
+    { length: columns * rows },
+    () => (Math.random() < INITIAL_LIVE_CHANCE ? 1 : 0),
+  );
+
+  return grid.some(Boolean) ? grid : seedPattern(grid, columns, rows, 2, 2);
+}
+
+function getGridMetrics() {
+  if (typeof window === "undefined") {
+    return { columns: 0, rows: 0, dotSize: 18, gap: 9 };
+  }
+
+  const compactLayout = window.innerWidth <= 720;
+  const dotSize = compactLayout ? 15 : 18;
+  const gap = compactLayout ? 8 : 9;
+  const pitch = dotSize + gap;
+  const contentPadding = compactLayout
+    ? MOBILE_CONTENT_PADDING
+    : DESKTOP_CONTENT_PADDING;
+  const topbarHeight = compactLayout
+    ? MOBILE_TOPBAR_HEIGHT
+    : DESKTOP_TOPBAR_HEIGHT;
+  const lifeHorizontalPadding = compactLayout
+    ? MOBILE_LIFE_HORIZONTAL_PADDING
+    : DESKTOP_LIFE_HORIZONTAL_PADDING;
+  const lifeTopPadding = compactLayout
+    ? MOBILE_LIFE_TOP_PADDING
+    : DESKTOP_LIFE_TOP_PADDING;
+  const lifeBottomPadding = compactLayout
+    ? MOBILE_LIFE_BOTTOM_PADDING
+    : DESKTOP_LIFE_BOTTOM_PADDING;
+  const contentWidth = Math.min(1120, window.innerWidth - contentPadding);
+  const availableWidth = Math.max(
+    pitch * 10,
+    contentWidth - lifeHorizontalPadding - pitch * 2,
+  );
+  const availableHeight = Math.max(
+    pitch * 14,
+    window.innerHeight -
+      topbarHeight -
+      lifeTopPadding -
+      lifeBottomPadding -
+      pitch * 2,
+  );
+
+  return {
+    columns: Math.max(10, Math.floor(availableWidth / pitch)),
+    rows: Math.max(14, Math.floor(availableHeight / pitch)),
+    dotSize,
+    gap,
+  };
+}
+
+function countNeighbors(grid, columns, rows, column, row) {
+  let neighbors = 0;
+
+  for (let rowOffset = -1; rowOffset <= 1; rowOffset += 1) {
+    for (let columnOffset = -1; columnOffset <= 1; columnOffset += 1) {
+      if (rowOffset === 0 && columnOffset === 0) {
+        continue;
+      }
+
+      const nextColumn = column + columnOffset;
+      const nextRow = row + rowOffset;
+
+      if (
+        nextColumn < 0 ||
+        nextColumn >= columns ||
+        nextRow < 0 ||
+        nextRow >= rows
+      ) {
+        continue;
+      }
+
+      neighbors += grid[nextRow * columns + nextColumn] > 0 ? 1 : 0;
+    }
+  }
+
+  return neighbors;
+}
+
+function advanceGrid(grid, columns, rows) {
+  const nextGrid = createEmptyGrid(columns, rows);
+  let activeCount = 0;
+
+  for (let row = 0; row < rows; row += 1) {
+    for (let column = 0; column < columns; column += 1) {
+      const index = row * columns + column;
+      const currentAge = grid[index];
+      const isAlive = currentAge > 0;
+      const neighbors = countNeighbors(grid, columns, rows, column, row);
+      const survives = isAlive && (neighbors === 2 || neighbors === 3);
+      const isBorn = !isAlive && neighbors === 3;
+      const nextValue = survives ? currentAge + 1 : isBorn ? 1 : 0;
+
+      nextGrid[index] = nextValue;
+      activeCount += nextValue > 0 ? 1 : 0;
+    }
+  }
+
+  return { nextGrid, activeCount };
+}
+
+function seedPattern(grid, columns, rows, centerColumn, centerRow) {
+  const nextGrid = [...grid];
+
+  CLICK_PATTERN.forEach(([columnOffset, rowOffset]) => {
+    const column = centerColumn + columnOffset;
+    const row = centerRow + rowOffset;
+
+    if (column < 0 || column >= columns || row < 0 || row >= rows) {
+      return;
+    }
+
+    nextGrid[row * columns + column] = 1;
+  });
+
+  return nextGrid;
+}
+
+function toSectionId(title) {
+  return title.toLowerCase().replaceAll(" ", "-");
+}
+
 function getPageFromHash(hash) {
   const normalizedHash = hash.replace("#", "");
 
@@ -242,42 +396,228 @@ function getPageFromHash(hash) {
   return "home";
 }
 
-function CvPage() {
-  return (
-    <section className="resume-sheet" aria-label="Curriculum vitae">
-      <header className="resume-header">
-        <h1>YOUR NAME</h1>
-        <p className="resume-subhead">
-          phone placeholder | email placeholder | city, state placeholder
-        </p>
-      </header>
+function DotField() {
+  const [metrics, setMetrics] = useState(() => getGridMetrics());
+  const { columns, rows, dotSize, gap } = metrics;
+  const [grid, setGrid] = useState(() => createRandomGrid(columns, rows));
+  const activeCountRef = useRef(
+    grid.reduce((count, value) => count + (value > 0 ? 1 : 0), 0),
+  );
+  const previousMetricsRef = useRef(metrics);
 
-      <div className="resume-main">
-        {cvSections.map((section) => (
-          <section key={section.title} className="resume-section">
-            <div className="resume-section-header">
-              <h2>{section.title}</h2>
+  useEffect(() => {
+    const handleResize = () => {
+      setMetrics(getGridMetrics());
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    setGrid((currentGrid) => {
+      const resizedGrid = createEmptyGrid(columns, rows);
+      const previousMetrics = previousMetricsRef.current;
+
+      if (currentGrid.length === 0) {
+        const randomGrid = createRandomGrid(columns, rows);
+        activeCountRef.current = randomGrid.reduce(
+          (count, value) => count + (value > 0 ? 1 : 0),
+          0,
+        );
+        previousMetricsRef.current = metrics;
+        return randomGrid;
+      }
+
+      const previousColumns = previousMetrics.columns;
+      const previousRows = previousMetrics.rows;
+      const copyColumns = Math.min(columns, previousColumns);
+      const copyRows = Math.min(rows, previousRows);
+
+      let nextActiveCount = 0;
+
+      for (let row = 0; row < copyRows; row += 1) {
+        for (let column = 0; column < copyColumns; column += 1) {
+          const previousIndex = row * previousColumns + column;
+          const nextIndex = row * columns + column;
+          const value = currentGrid[previousIndex] ?? 0;
+
+          resizedGrid[nextIndex] = value;
+          nextActiveCount += value > 0 ? 1 : 0;
+        }
+      }
+
+      activeCountRef.current = nextActiveCount;
+      previousMetricsRef.current = metrics;
+      return resizedGrid;
+    });
+  }, [columns, metrics, rows]);
+
+  useEffect(() => {
+    if (columns === 0 || rows === 0) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (activeCountRef.current === 0) {
+        return;
+      }
+
+      setGrid((currentGrid) => {
+        const { nextGrid, activeCount } = advanceGrid(currentGrid, columns, rows);
+        activeCountRef.current = activeCount;
+        return nextGrid;
+      });
+    }, STEP_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [columns, rows]);
+
+  const cells = useMemo(
+    () =>
+      Array.from({ length: columns * rows }, (_, index) => {
+        const age = grid[index];
+        const isAlive = age > 0;
+        const colorIndex = isAlive
+          ? (Math.floor((age - 1) / 2) % AGE_COLOR_CYCLE.length)
+          : 0;
+        const cycleDepth = Math.min(
+          colorIndex,
+          AGE_COLOR_CYCLE.length - 1 - colorIndex,
+        );
+        const cellColor = AGE_COLOR_CYCLE[colorIndex];
+        const glowAlpha = Math.min(0.3, 0.14 + cycleDepth * 0.05);
+
+        return (
+          <button
+            key={index}
+            type="button"
+            className={`dot ${isAlive ? "is-alive" : ""}`}
+            aria-label={isAlive ? "Active cell" : "Inactive cell"}
+            style={{
+              width: `${dotSize}px`,
+              height: `${dotSize}px`,
+              ...(isAlive
+                ? {
+                    backgroundColor: cellColor,
+                    boxShadow: `0 0 0 1px rgba(163, 177, 138, 0.3), 0 0 16px rgba(58, 90, 64, ${glowAlpha})`,
+                  }
+                : undefined),
+            }}
+            onClick={() => {
+              const row = Math.floor(index / columns);
+              const column = index % columns;
+
+              setGrid((currentGrid) => {
+                const nextGrid = seedPattern(
+                  currentGrid,
+                  columns,
+                  rows,
+                  column,
+                  row,
+                );
+
+                activeCountRef.current = nextGrid.reduce(
+                  (count, value) => count + (value > 0 ? 1 : 0),
+                  0,
+                );
+
+                return nextGrid;
+              });
+            }}
+          />
+        );
+      }),
+    [columns, dotSize, grid, rows],
+  );
+
+  return (
+    <div className="life-page">
+      <div
+        className="dot-grid"
+        style={{
+          gap: `${gap}px`,
+          gridTemplateColumns: `repeat(${columns}, ${dotSize}px)`,
+          gridTemplateRows: `repeat(${rows}, ${dotSize}px)`,
+        }}
+      >
+        {cells}
+      </div>
+
+      <p className="life-instruction">
+        Click anywhere on the board to introduce new active cells.
+      </p>
+    </div>
+  );
+}
+
+function CvPage() {
+  const [activeSectionTitle, setActiveSectionTitle] = useState(cvSections[0].title);
+  const activeSection =
+    cvSections.find((section) => section.title === activeSectionTitle) ?? cvSections[0];
+
+  return (
+    <>
+      <section className="cv-banner-placeholder" aria-label="Animation placeholder">
+        <span>Animation Banner</span>
+      </section>
+
+      <section className="cv-layout" aria-label="Curriculum vitae">
+        <aside className="cv-sidebar">
+          <div className="cv-sidebar-inner">
+            <p className="section-eyebrow">Jump To</p>
+            <nav className="cv-side-nav" aria-label="CV section navigation">
+              {cvSections.map((section) => (
+                <button
+                  key={section.title}
+                  type="button"
+                  className={`side-nav-pill ${
+                    activeSectionTitle === section.title ? "is-active" : ""
+                  }`}
+                  onClick={() => setActiveSectionTitle(section.title)}
+                >
+                  {section.title}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </aside>
+
+        <div className="cv-content">
+          <section
+            key={activeSection.title}
+            id={toSectionId(activeSection.title)}
+            className="cv-section-card"
+          >
+            <div className="cv-section-header">
+              <h2 className="cv-section-title">{activeSection.title}</h2>
+              <div className="cv-section-divider" />
             </div>
 
-            <div className="resume-section-body">
-              {section.entries.map((entry) => (
+            <div className="cv-section-body">
+              {activeSection.entries.map((entry) => (
                 <article
-                  key={`${section.title}-${entry.heading}-${entry.meta ?? ""}`}
-                  className="resume-entry"
+                  key={`${activeSection.title}-${entry.heading}-${entry.meta ?? ""}`}
+                  className="cv-entry"
                 >
-                  <div className="resume-entry-top">
+                  <div className="cv-entry-top">
                     <h3>{entry.heading}</h3>
-                    {entry.meta ? <p className="resume-meta">{entry.meta}</p> : null}
+                    {entry.meta ? <p className="cv-meta">{entry.meta}</p> : null}
                   </div>
 
                   {entry.subheading ? (
-                    <p className="resume-subheading">{entry.subheading}</p>
+                    <p className="cv-subheading">{entry.subheading}</p>
                   ) : null}
 
-                  {entry.detail ? <p className="resume-detail">{entry.detail}</p> : null}
+                  {entry.detail ? <p className="cv-detail">{entry.detail}</p> : null}
 
                   {entry.bullets ? (
-                    <ul className="resume-bullets">
+                    <ul className="cv-bullets">
                       {entry.bullets.map((bullet) => (
                         <li key={bullet}>{bullet}</li>
                       ))}
@@ -287,79 +627,114 @@ function CvPage() {
               ))}
             </div>
           </section>
-        ))}
-      </div>
-    </section>
+        </div>
+      </section>
+    </>
   );
 }
 
 function ProjectsPage() {
   return (
     <>
-      <section className="page-hero projects-hero">
-        <p className="hero-kicker">Projects</p>
-        <h1>Build a portfolio that feels active and organized.</h1>
-        <p className="hero-copy">
-          This layout starts with a GitHub-style activity panel, then separates
-          your work into current projects, favorite projects, and everything
-          else.
-        </p>
-      </section>
+      <section className="projects-feature-row" aria-label="Projects highlights">
+        <div
+          className="projects-animation-placeholder"
+          aria-label="Animation placeholder"
+        />
 
-      <section className="projects-layout">
-        <article className="github-card">
-          <div className="github-card-header">
-            <div>
-              <p className="section-eyebrow">GitHub Activity</p>
-              <h2>Contribution Snapshot</h2>
-            </div>
-            <p className="github-card-note">placeholder year view</p>
+        <article
+          className="project-tile github-plugin-card project-tile-card"
+          aria-label="GitHub activity plugin"
+        >
+          <div className="github-stats-grid">
+            <article className="github-stat-card">
+              <span>Commits</span>
+              <strong>148</strong>
+            </article>
+            <article className="github-stat-card">
+              <span>Pull Requests</span>
+              <strong>19</strong>
+            </article>
           </div>
 
-          <div className="contribution-grid" aria-label="GitHub activity heatmap">
-            {contributionLevels.map((level, index) => (
+          <div className="github-heatmap" aria-label="GitHub activity">
+            {githubActivityLevels.map((level, index) => (
               <span
                 key={`${level}-${index}`}
-                className={`contribution-cell level-${level}`}
+                className={`github-cell github-cell-level-${level}`}
               />
             ))}
           </div>
 
-          <div className="contribution-legend" aria-hidden="true">
-            <span>Less</span>
-            <div className="legend-scale">
-              {[0, 1, 2, 3, 4].map((level) => (
-                <span key={level} className={`contribution-cell level-${level}`} />
-              ))}
-            </div>
-            <span>More</span>
+          <div className="github-labels" aria-label="GitHub labels">
+            {["JavaScript", "React", "CSS", "UI/UX"].map((label) => (
+              <span key={label} className="github-label-pill">
+                {label}
+              </span>
+            ))}
           </div>
         </article>
+      </section>
 
-        <div className="project-groups">
-          {projectGroups.map((group) => (
-            <section key={group.title} className="project-group">
-              <div className="project-group-header">
-                <p className="section-eyebrow">{group.title}</p>
-                <div className="project-divider" />
-              </div>
-
-              <div className="project-card-grid">
-                {group.items.map((project) => (
-                  <article key={project.name} className="project-card">
-                    <div className="project-card-top">
-                      <h3>{project.name}</h3>
-                      <span className="project-pill">{project.status}</span>
-                    </div>
-                    <p>{project.description}</p>
-                  </article>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
+      <section className="projects-tile-grid" aria-label="Project tiles">
+        {projectTiles.map((project) => (
+          <article key={project.title} className="project-tile-card">
+            <div className="project-image-placeholder" aria-hidden="true">
+              <span>Image</span>
+            </div>
+            <h2>{project.title}</h2>
+            <p>{project.description}</p>
+          </article>
+        ))}
       </section>
     </>
+  );
+}
+
+function AboutPage() {
+  return (
+    <section className="about-layout" aria-label="About me">
+      <div className="about-animation-placeholder" aria-label="Animation placeholder" />
+
+      <article className="about-copy-card">
+        <div className="about-photo-placeholder" aria-label="Photo placeholder">
+          <span>Photo</span>
+        </div>
+
+        <p className="about-placeholder-copy">
+          This is a placeholder paragraph for your About Me section. You can replace
+          it with your introduction, background, interests, or anything else you want
+          visitors to learn about you.
+        </p>
+      </article>
+    </section>
+  );
+}
+
+function ContactPage() {
+  return (
+    <section className="contact-layout" aria-label="Contact me">
+      <div className="contact-animation-placeholder" aria-label="Animation placeholder" />
+
+      <div className="contact-content-column">
+        <p className="contact-email-line">email [at] gmail.com</p>
+
+        <div className="contact-button-row">
+          {contactItems.map((item) => (
+            <a
+              key={item.label}
+              className="contact-link-button"
+              href={item.href}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={item.label}
+            >
+              {item.icon}
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -381,10 +756,18 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    document.body.style.overflow = currentPage === "home" ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [currentPage]);
+
   const page = pages[currentPage];
 
   return (
-    <div className="site-shell">
+    <div className={`site-shell ${currentPage === "home" ? "site-shell-home" : ""}`}>
       <header className="topbar">
         <a
           className={`brand ${currentPage === "home" ? "is-active" : ""}`}
@@ -407,37 +790,17 @@ function App() {
         </nav>
       </header>
 
-      <main className="content">
-        {currentPage === "cv" ? (
+      <main className={`content ${currentPage === "home" ? "content-home" : ""}`}>
+        {currentPage === "about" ? (
+          <AboutPage />
+        ) : currentPage === "cv" ? (
           <CvPage />
         ) : currentPage === "projects" ? (
           <ProjectsPage />
+        ) : currentPage === "contact" ? (
+          <ContactPage />
         ) : (
-          <>
-            <section className="page-hero">
-              <p className="hero-kicker">{page.eyebrow}</p>
-              <h1>{page.title}</h1>
-              <p className="hero-copy">{page.body}</p>
-            </section>
-
-            <section className="page-panel">
-              <p className="section-eyebrow">{page.label}</p>
-              <div className="page-grid">
-                <div className="content-card">
-                  <h2>Page Overview</h2>
-                  <p>{page.accent}</p>
-                </div>
-
-                <div className="content-card">
-                  <h2>Next Step</h2>
-                  <p>
-                    Swap this placeholder copy with your real content and
-                    expand the layout however you want.
-                  </p>
-                </div>
-              </div>
-            </section>
-          </>
+          <DotField />
         )}
       </main>
     </div>
