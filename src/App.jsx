@@ -670,9 +670,23 @@ function DotField() {
       </div>
 
       <footer className="life-footer">
-        <p className="life-instruction">
-        Click anywhere on the board to introduce new active cells.
-        </p>
+        <div className="life-info-hover">
+          <p className="life-instruction" tabIndex={0}>
+            Click anywhere on the board to introduce new active cells.
+          </p>
+          <div className="life-info-panel" role="note" aria-label="About this graphic">
+            <p>
+              Inspired by Conway&apos;s Game of Life, this board gives each cell a
+              full life cycle: new infections begin pale, deepen through darker
+              blues, then fade back toward their starting shade before dying.
+              When a cell dies, it bursts into its eight neighboring positions,
+              each with an 0.8 chance of becoming infected. You can also click
+              any point on the board to introduce fresh activity. The simulation
+              advances in 0.8s steps, and when the board fully burns out,
+              a small random cluster of 20 to 30 cells start the process again.
+            </p>
+          </div>
+        </div>
       </footer>
     </div>
   );
