@@ -1,22 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-const STEP_INTERVAL_MS = 1000;
-const INITIAL_LIVE_CHANCE = 0.12;
-const AGE_COLORS = [
-  "#A3B18A",
-  "#588157",
-  "#3A5A40",
-  "#344E41",
-];
+const STEP_INTERVAL_MS = 800;
+const START_DELAY_MS = 1250;
+const RESEED_DELAY_MS = 2000;
 const AGE_COLOR_CYCLE = [
-  "#A3B18A",
-  "#588157",
-  "#3A5A40",
-  "#344E41",
-  "#3A5A40",
-  "#588157",
-  "#A3B18A",
+  "#9EB3C2",
+  "#1C7293",
+  "#065A82",
+  "#1B3B6F",
+  "#21295C",
+  "#1B3B6F",
+  "#065A82",
+  "#1C7293",
+  "#9EB3C2",
 ];
+const MAX_CELL_AGE = AGE_COLOR_CYCLE.length * 2;
+const EXPLOSION_INFECTION_PROBABILITY = 0.8;
 const DESKTOP_CONTENT_PADDING = 64;
 const MOBILE_CONTENT_PADDING = 36;
 const DESKTOP_TOPBAR_HEIGHT = 92;
@@ -33,6 +32,13 @@ const CLICK_PATTERN = [
   [2, 0],
   [2, -1],
   [1, -2],
+];
+const ACM_PATTERN = [
+  "0111000011110010001",
+  "1000100100000011011",
+  "1111100100000010101",
+  "1000100100000010001",
+  "1000100011110010001",
 ];
 
 const cvSections = [
@@ -260,13 +266,53 @@ function createEmptyGrid(columns, rows) {
   return Array.from({ length: columns * rows }, () => 0);
 }
 
-function createRandomGrid(columns, rows) {
-  const grid = Array.from(
-    { length: columns * rows },
-    () => (Math.random() < INITIAL_LIVE_CHANCE ? 1 : 0),
-  );
+function createAcmGrid(columns, rows) {
+  const grid = createEmptyGrid(columns, rows);
+  const patternRows = ACM_PATTERN.length;
+  const patternColumns = ACM_PATTERN[0]?.length ?? 0;
+  const startRow = Math.max(0, Math.floor((rows - patternRows) / 2));
+  const startColumn = Math.max(0, Math.floor((columns - patternColumns) / 2));
 
-  return grid.some(Boolean) ? grid : seedPattern(grid, columns, rows, 2, 2);
+  ACM_PATTERN.forEach((patternRow, rowIndex) => {
+    patternRow.split("").forEach((cell, columnIndex) => {
+      if (cell !== "1") {
+        return;
+      }
+
+      const row = startRow + rowIndex;
+      const column = startColumn + columnIndex;
+
+      if (column >= columns || row >= rows) {
+        return;
+      }
+
+      grid[row * columns + column] = 1;
+    });
+  });
+
+  return grid.some(Boolean)
+    ? grid
+    : seedPattern(grid, columns, rows, Math.floor(columns / 2), Math.floor(rows / 2));
+}
+
+function createRandomReseedGrid(columns, rows) {
+  const grid = createEmptyGrid(columns, rows);
+  const seedCount = 20 + Math.floor(Math.random() * 11);
+  const centerColumn = Math.floor(columns / 2);
+  const centerRow = Math.floor(rows / 2);
+
+  for (let index = 0; index < seedCount; index += 1) {
+    const columnOffset = Math.floor(Math.random() * 7) - 3;
+    const rowOffset = Math.floor(Math.random() * 7) - 3;
+    const column = Math.min(columns - 1, Math.max(0, centerColumn + columnOffset));
+    const row = Math.min(rows - 1, Math.max(0, centerRow + rowOffset));
+
+    grid[row * columns + column] = 1;
+  }
+
+  return grid.some(Boolean)
+    ? grid
+    : seedPattern(grid, columns, rows, centerColumn, centerRow);
 }
 
 function getGridMetrics() {
@@ -308,7 +354,7 @@ function getGridMetrics() {
   );
 
   return {
-    columns: Math.max(10, Math.floor(availableWidth / pitch)),
+    columns: Math.max(10, Math.floor(availableWidth / pitch) + 2),
     rows: Math.max(14, Math.floor(availableHeight / pitch)),
     dotSize,
     gap,
@@ -345,7 +391,7 @@ function countNeighbors(grid, columns, rows, column, row) {
 
 function advanceGrid(grid, columns, rows) {
   const nextGrid = createEmptyGrid(columns, rows);
-  let activeCount = 0;
+  const explodingCells = [];
 
   for (let row = 0; row < rows; row += 1) {
     for (let column = 0; column < columns; column += 1) {
@@ -355,12 +401,53 @@ function advanceGrid(grid, columns, rows) {
       const neighbors = countNeighbors(grid, columns, rows, column, row);
       const survives = isAlive && (neighbors === 2 || neighbors === 3);
       const isBorn = !isAlive && neighbors === 3;
-      const nextValue = survives ? currentAge + 1 : isBorn ? 1 : 0;
+      const nextAge = survives ? currentAge + 1 : isBorn ? 1 : 0;
+      const diesOfOldAge = nextAge > MAX_CELL_AGE;
+      const nextValue = diesOfOldAge ? 0 : nextAge;
 
       nextGrid[index] = nextValue;
-      activeCount += nextValue > 0 ? 1 : 0;
+
+      if (diesOfOldAge) {
+        explodingCells.push([column, row]);
+      }
     }
   }
+
+  explodingCells.forEach(([column, row]) => {
+    for (let rowOffset = -1; rowOffset <= 1; rowOffset += 1) {
+      for (let columnOffset = -1; columnOffset <= 1; columnOffset += 1) {
+        if (rowOffset === 0 && columnOffset === 0) {
+          continue;
+        }
+
+        const nextColumn = column + columnOffset;
+        const nextRow = row + rowOffset;
+
+        if (
+          nextColumn < 0 ||
+          nextColumn >= columns ||
+          nextRow < 0 ||
+          nextRow >= rows
+        ) {
+          continue;
+        }
+
+        const neighborIndex = nextRow * columns + nextColumn;
+
+        if (
+          nextGrid[neighborIndex] === 0 &&
+          Math.random() < EXPLOSION_INFECTION_PROBABILITY
+        ) {
+          nextGrid[neighborIndex] = 1;
+        }
+      }
+    }
+  });
+
+  const activeCount = nextGrid.reduce(
+    (count, value) => count + (value > 0 ? 1 : 0),
+    0,
+  );
 
   return { nextGrid, activeCount };
 }
@@ -399,11 +486,23 @@ function getPageFromHash(hash) {
 function DotField() {
   const [metrics, setMetrics] = useState(() => getGridMetrics());
   const { columns, rows, dotSize, gap } = metrics;
-  const [grid, setGrid] = useState(() => createRandomGrid(columns, rows));
+  const [grid, setGrid] = useState(() => createAcmGrid(columns, rows));
+  const [hasStarted, setHasStarted] = useState(false);
   const activeCountRef = useRef(
     grid.reduce((count, value) => count + (value > 0 ? 1 : 0), 0),
   );
   const previousMetricsRef = useRef(metrics);
+  const reseedTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setHasStarted(true);
+    }, START_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -423,13 +522,13 @@ function DotField() {
       const previousMetrics = previousMetricsRef.current;
 
       if (currentGrid.length === 0) {
-        const randomGrid = createRandomGrid(columns, rows);
-        activeCountRef.current = randomGrid.reduce(
+        const acmGrid = createAcmGrid(columns, rows);
+        activeCountRef.current = acmGrid.reduce(
           (count, value) => count + (value > 0 ? 1 : 0),
           0,
         );
         previousMetricsRef.current = metrics;
-        return randomGrid;
+        return acmGrid;
       }
 
       const previousColumns = previousMetrics.columns;
@@ -457,12 +556,27 @@ function DotField() {
   }, [columns, metrics, rows]);
 
   useEffect(() => {
-    if (columns === 0 || rows === 0) {
+    if (columns === 0 || rows === 0 || !hasStarted) {
       return undefined;
     }
 
     const intervalId = window.setInterval(() => {
       if (activeCountRef.current === 0) {
+        if (reseedTimeoutRef.current !== null) {
+          return;
+        }
+
+        reseedTimeoutRef.current = window.setTimeout(() => {
+          setGrid(() => {
+            const reseededGrid = createRandomReseedGrid(columns, rows);
+            activeCountRef.current = reseededGrid.reduce(
+              (count, value) => count + (value > 0 ? 1 : 0),
+              0,
+            );
+            reseedTimeoutRef.current = null;
+            return reseededGrid;
+          });
+        }, RESEED_DELAY_MS);
         return;
       }
 
@@ -475,8 +589,12 @@ function DotField() {
 
     return () => {
       window.clearInterval(intervalId);
+      if (reseedTimeoutRef.current !== null) {
+        window.clearTimeout(reseedTimeoutRef.current);
+        reseedTimeoutRef.current = null;
+      }
     };
-  }, [columns, rows]);
+  }, [columns, hasStarted, rows]);
 
   const cells = useMemo(
     () =>
@@ -505,7 +623,7 @@ function DotField() {
               ...(isAlive
                 ? {
                     backgroundColor: cellColor,
-                    boxShadow: `0 0 0 1px rgba(163, 177, 138, 0.3), 0 0 16px rgba(58, 90, 64, ${glowAlpha})`,
+                    boxShadow: `0 0 0 1px rgba(158, 179, 194, 0.32), 0 0 16px rgba(27, 59, 111, ${glowAlpha})`,
                   }
                 : undefined),
             }}
@@ -538,20 +656,24 @@ function DotField() {
 
   return (
     <div className="life-page">
-      <div
-        className="dot-grid"
-        style={{
-          gap: `${gap}px`,
-          gridTemplateColumns: `repeat(${columns}, ${dotSize}px)`,
-          gridTemplateRows: `repeat(${rows}, ${dotSize}px)`,
-        }}
-      >
-        {cells}
+      <div className="life-board">
+        <div
+          className="dot-grid"
+          style={{
+            gap: `${gap}px`,
+            gridTemplateColumns: `repeat(${columns}, ${dotSize}px)`,
+            gridTemplateRows: `repeat(${rows}, ${dotSize}px)`,
+          }}
+        >
+          {cells}
+        </div>
       </div>
 
-      <p className="life-instruction">
+      <footer className="life-footer">
+        <p className="life-instruction">
         Click anywhere on the board to introduce new active cells.
-      </p>
+        </p>
+      </footer>
     </div>
   );
 }
@@ -702,9 +824,7 @@ function AboutPage() {
         </div>
 
         <p className="about-placeholder-copy">
-          This is a placeholder paragraph for your About Me section. You can replace
-          it with your introduction, background, interests, or anything else you want
-          visitors to learn about you.
+          placeholder text
         </p>
       </article>
     </section>
@@ -774,7 +894,7 @@ function App() {
           href="#home"
           aria-label="Homepage"
         >
-          YOUR NAME
+          AMY MA
         </a>
 
         <nav className="nav" aria-label="Primary">

@@ -2,6 +2,9 @@
   font-family: "DM Sans", sans-serif;
   color: #111111;
   background: #ffffff;
+  --nav-text: #3f4a56;
+  --nav-hover: #1b3b6f;
+  --nav-underline: #1b3b6f;
   line-height: 1.5;
   font-weight: 400;
   text-rendering: optimizeLegibility;
@@ -64,6 +67,7 @@ button {
   display: inline-flex;
   align-items: center;
   padding: 4px 0;
+  color: var(--nav-text);
   font-size: 0.98rem;
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -87,6 +91,7 @@ button {
   display: inline-flex;
   align-items: center;
   padding: 4px 0;
+  color: var(--nav-text);
   font-size: 0.98rem;
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -104,8 +109,8 @@ button {
   left: 0;
   bottom: -3px;
   width: 100%;
-  height: 1.5px;
-  background: #111111;
+  height: 2.5px;
+  background: var(--nav-underline);
   transform: scaleX(0);
   transform-origin: center;
   transition: transform 180ms ease;
@@ -115,6 +120,7 @@ button {
 .brand:focus-visible,
 .nav-link:hover,
 .nav-link:focus-visible {
+  color: var(--nav-hover);
   font-size: 1.08rem;
   transform: translateY(-1px);
 }
@@ -693,17 +699,24 @@ button {
 }
 
 .life-page {
-  position: relative;
   display: grid;
-  place-items: center;
+  grid-template-rows: minmax(0, 1fr) auto;
   width: 100%;
   height: 100%;
-  padding: 24px 36px 96px;
+  padding: 24px 36px 28px;
   overflow: hidden;
 }
 
 .life-page::before {
   content: none;
+}
+
+.life-board {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .dot-grid {
@@ -715,12 +728,15 @@ button {
   max-height: 100%;
 }
 
+.life-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 68px;
+}
+
 .life-instruction {
-  position: absolute;
-  left: 50%;
-  bottom: 28px;
   margin: 0;
-  transform: translateX(-50%);
   font-size: 0.92rem;
   letter-spacing: 0.01em;
   color: #6e7668;
@@ -746,18 +762,18 @@ button {
 .dot:hover,
 .dot:focus-visible {
   transform: scale(1.18);
-  background: rgba(203, 217, 193, 0.72);
+  background: #1c7293;
   box-shadow:
-    0 0 0 1px rgba(193, 211, 180, 0.34),
-    0 0 14px rgba(166, 184, 152, 0.28);
+    0 0 0 1px rgba(28, 114, 147, 0.34),
+    0 0 14px rgba(27, 59, 111, 0.22);
   outline: none;
 }
 
 .dot.is-alive {
-  background: #c1d3b4;
+  background: #9eb3c2;
   box-shadow:
-    0 0 0 1px rgba(193, 211, 180, 0.34),
-    0 0 16px rgba(166, 184, 152, 0.28);
+    0 0 0 1px rgba(158, 179, 194, 0.34),
+    0 0 16px rgba(27, 59, 111, 0.2);
 }
 
 @media (max-width: 760px) {
@@ -867,15 +883,18 @@ button {
   }
 
   .life-page {
-    padding: 12px 14px 52px;
+    padding: 12px 14px 12px;
   }
 
   .content-home {
     height: calc(100vh - 118px);
   }
 
+  .life-footer {
+    min-height: 52px;
+  }
+
   .life-instruction {
-    bottom: 18px;
     max-width: calc(100% - 24px);
     white-space: normal;
     text-align: center;
