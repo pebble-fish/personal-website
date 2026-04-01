@@ -1082,13 +1082,20 @@ function DotField() {
     () => grid.reduce((count, value) => count + (value > 0 ? 1 : 0), 0),
     [grid],
   );
+  const lifeDescription =
+    "Inspired by Conway's Game of Life, this board gives each cell a full life cycle: new infections begin pale, deepen through darker blues, then fade back toward their starting shade before dying. When a cell dies, it bursts into its eight neighboring positions, each with an 0.8 chance of becoming infected. You can also click any point on the board to introduce fresh activity. The simulation advances in 0.8s steps, and when the board fully burns out, a small random cluster of 20 to 28 cells start the process again.";
 
   return (
     <div className="life-page">
       <div className="life-board">
-        <div className="life-caption" aria-label={`Currently infected cells: ${infectedCount}`}>
-          <span>(Not) Conway</span>
-          <strong>n = {infectedCount}</strong>
+        <div className="life-info-hover life-info-hover-caption">
+          <div className="life-caption" aria-label={`Currently infected cells: ${infectedCount}`}>
+            <span>(Not) Conway</span>
+            <strong>n = {infectedCount}</strong>
+          </div>
+          <div className="life-info-panel" role="note" aria-label="About this graphic">
+            <p>{lifeDescription}</p>
+          </div>
         </div>
 
         <div
@@ -1109,16 +1116,7 @@ function DotField() {
             Click anywhere on the board to introduce new active cells.
           </p>
           <div className="life-info-panel" role="note" aria-label="About this graphic">
-            <p>
-              Inspired by Conway&apos;s Game of Life, this board gives each cell a
-              full life cycle: new infections begin pale, deepen through darker
-              blues, then fade back toward their starting shade before dying.
-              When a cell dies, it bursts into its eight neighboring positions,
-              each with an 0.8 chance of becoming infected. You can also click
-              any point on the board to introduce fresh activity. The simulation
-              advances in 0.8s steps, and when the board fully burns out,
-              a small random cluster of 20 to 28 cells start the process again.
-            </p>
+            <p>{lifeDescription}</p>
           </div>
         </div>
       </footer>

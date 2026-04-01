@@ -46,7 +46,7 @@ button {
 
 .site-shell-home {
   height: 100vh;
-  overflow: hidden;
+  overflow: visible;
   padding-bottom: 0;
 }
 
@@ -146,7 +146,7 @@ button {
 
 .content-home {
   height: calc(100vh - 92px);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .page-hero {
@@ -742,7 +742,7 @@ button {
   width: 100%;
   height: 100%;
   padding: 24px 36px 28px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .life-page::before {
@@ -761,29 +761,31 @@ button {
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 12px 30px rgba(17, 17, 17, 0.04);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .life-caption {
-  position: absolute;
-  left: 24px;
-  bottom: 20px;
-  z-index: 2;
+  position: relative;
   display: inline-flex;
   align-items: center;
+  flex-wrap: nowrap;
   gap: 12px;
   min-height: 38px;
-  padding: 0 14px;
+  padding: 0 18px;
+  width: fit-content;
+  min-width: fit-content;
   border: 1px solid rgba(27, 59, 111, 0.12);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
+  background: #ffffff;
   box-shadow: 0 10px 24px rgba(17, 17, 17, 0.05);
   color: #1b3b6f;
-  backdrop-filter: blur(8px);
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .life-caption span,
 .life-caption strong {
+  display: block;
   font-size: 0.78rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -799,9 +801,9 @@ button {
 
 .life-info-panel {
   position: absolute;
-  left: 50%;
+  left: 0;
   bottom: calc(100% + 10px);
-  transform: translateX(-50%) translateY(6px);
+  transform: translateY(6px);
   z-index: 2;
   width: max-content;
   max-width: min(720px, calc(100vw - 48px));
@@ -847,10 +849,18 @@ button {
   justify-content: center;
 }
 
+.life-info-hover-caption {
+  position: absolute;
+  left: 24px;
+  bottom: 20px;
+  z-index: 2;
+  max-width: calc(100% - 48px);
+}
+
 .life-info-hover:hover .life-info-panel,
 .life-info-hover:focus-within .life-info-panel {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0);
 }
 
 .life-instruction {
@@ -873,9 +883,7 @@ button {
   border: none;
   border-radius: 999px;
   background: rgba(120, 126, 120, 0.22);
-  box-shadow:
-    inset 0 0 0 1px rgba(100, 106, 100, 0.08),
-    0 0 0 1px rgba(255, 255, 255, 0.7);
+  box-shadow: none;
   cursor: pointer;
   transition:
     transform 120ms ease,
@@ -1035,11 +1043,14 @@ button {
   }
 
   .life-caption {
-    left: 16px;
-    bottom: 14px;
     gap: 10px;
     min-height: 34px;
     padding: 0 12px;
+  }
+
+  .life-info-hover-caption {
+    left: 16px;
+    bottom: 14px;
   }
 
   .life-info-panel {
