@@ -201,7 +201,13 @@ button {
   grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
   gap: 28px;
   align-items: stretch;
-  padding: 88px 0 40px;
+  padding: 24px 0 40px;
+}
+
+.about-animation-column {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 14px;
 }
 
 .about-animation-placeholder,
@@ -217,9 +223,10 @@ button {
   display: grid;
   place-items: center;
   min-height: 460px;
-  overflow: hidden;
+  overflow: visible;
   padding: 20px;
   background: #ffffff;
+  cursor: pointer;
 }
 
 .about-graph-animation {
@@ -227,10 +234,14 @@ button {
   height: 100%;
 }
 
-.about-animation-caption {
+.about-info-hover {
   position: absolute;
   left: 24px;
   bottom: 20px;
+  z-index: 2;
+}
+
+.about-animation-caption {
   display: inline-flex;
   align-items: center;
   gap: 12px;
@@ -242,6 +253,42 @@ button {
   box-shadow: 0 10px 24px rgba(17, 17, 17, 0.05);
   color: #1b3b6f;
   backdrop-filter: blur(8px);
+}
+
+.about-animation-caption:focus-visible {
+  outline: none;
+}
+
+.about-info-panel {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  transform: translateY(6px);
+  z-index: 2;
+  width: min(392px, calc(100vw - 96px));
+  padding: 14px 16px;
+  border: 1px solid rgba(27, 59, 111, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 18px 36px rgba(17, 17, 17, 0.08);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.about-info-panel p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #4f5966;
+}
+
+.about-info-hover:hover .about-info-panel,
+.about-info-hover:focus-within .about-info-panel {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .about-animation-caption span,
@@ -257,6 +304,14 @@ button {
 
 .about-animation-caption strong {
   font-weight: 700;
+}
+
+.about-animation-instruction {
+  margin: 0;
+  font-size: 0.92rem;
+  letter-spacing: 0.01em;
+  color: #6e7668;
+  text-align: center;
 }
 
 .about-copy-card {
@@ -282,12 +337,80 @@ button {
 }
 
 .about-placeholder-copy {
-  margin: 0;
   max-width: 36ch;
   font-size: 1.02rem;
   line-height: 1.8;
   color: #444444;
   text-align: left;
+}
+
+.about-placeholder-copy p {
+  margin: 0;
+}
+
+.about-placeholder-copy p + p {
+  margin-top: 18px;
+}
+
+.about-name-hover {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.about-highlight-name,
+.about-inline-link {
+  color: #1b3b6f;
+}
+
+.about-highlight-name {
+  cursor: help;
+}
+
+.about-highlight-name:focus-visible {
+  outline: none;
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}
+
+.about-inline-link {
+  text-decoration: none;
+}
+
+.about-inline-link:hover,
+.about-inline-link:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+  outline: none;
+}
+
+.about-inline-panel {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  transform: translateY(6px);
+  z-index: 2;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 48px));
+  padding: 10px 12px;
+  border: 1px solid rgba(27, 59, 111, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 18px 36px rgba(17, 17, 17, 0.08);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #4f5966;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.about-name-hover:hover .about-inline-panel,
+.about-name-hover:focus-within .about-inline-panel {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .projects-hero h1 {

@@ -15,15 +15,8 @@ const ABOUT_TILE_PALETTE = [
   "#9EB3C2",
 ];
 const AGE_COLOR_CYCLE = [
-  "#21295C",
-  "#1B3B6F",
-  "#065A82",
-  "#1C7293",
-  "#9EB3C2",
-  "#1C7293",
-  "#065A82",
-  "#1B3B6F",
-  "#21295C",
+  ...ABOUT_TILE_PALETTE,
+  ...ABOUT_TILE_PALETTE.slice(0, -1).reverse(),
 ];
 const MAX_CELL_AGE = AGE_COLOR_CYCLE.length * 2;
 const EXPLOSION_INFECTION_PROBABILITY = 0.8;
@@ -339,11 +332,11 @@ function createRandomReseedGrid(columns, rows) {
 
 function getGridMetrics() {
   if (typeof window === "undefined") {
-    return { columns: 0, rows: 0, dotSize: getHomepageDotBaseSize(), gap: 9 };
+    return { columns: 0, rows: 0, dotSize: getHomepageDotBaseSize() * 1.5, gap: 9 };
   }
 
   const compactLayout = window.innerWidth <= 720;
-  const dotSize = getHomepageDotBaseSize();
+  const dotSize = getHomepageDotBaseSize() * 1.5;
   const gap = compactLayout ? 8 : 9;
   const pitch = dotSize + gap;
   const contentPadding = compactLayout
@@ -809,12 +802,17 @@ function AboutGraphAnimation() {
     n: ABOUT_START_N,
     direction: -1,
   });
+  const [isPaused, setIsPaused] = useState(false);
   const [homepageDotSize, setHomepageDotSize] = useState(() =>
     getHomepageDotBaseSize(),
   );
   const { n } = animationState;
 
   useEffect(() => {
+    if (isPaused) {
+      return undefined;
+    }
+
     const intervalId = window.setInterval(() => {
       setAnimationState((currentState) => {
         let nextDirection = currentState.direction;
@@ -838,7 +836,7 @@ function AboutGraphAnimation() {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, []);
+  }, [isPaused]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -882,7 +880,11 @@ function AboutGraphAnimation() {
   }, [homepageDotSize, n]);
 
   return (
-    <div className="about-animation-placeholder" aria-hidden="true">
+    <div
+      className="about-animation-placeholder"
+      aria-hidden="true"
+      onClick={() => setIsPaused((current) => !current)}
+    >
       <svg
         className="about-graph-animation"
         viewBox={`0 0 ${aboutPattern.viewBoxSize} ${aboutPattern.viewBoxSize}`}
@@ -900,9 +902,14 @@ function AboutGraphAnimation() {
         ))}
       </svg>
 
-      <div className="about-animation-caption">
-        <span>IMO P6 (2025)</span>
-        <strong>n = {n}</strong>
+      <div className="about-info-hover">
+        <div className="about-animation-caption" tabIndex={0}>
+          <span>IMO P6 (2025)</span>
+          <strong>n = {n}</strong>
+        </div>
+        <div className="about-info-panel" role="note" aria-label="About this animation">
+          <p>Based on IMO 2025 Problem 6, this animation shows how a square grid can be tiled as n changes while leaving exactly one uncovered unit square in every row and every column. The colored blocks show the larger tiles, and the shifting pattern highlights how the construction reorganizes itself for different boards.</p>
+        </div>
       </div>
     </div>
   );
@@ -1048,6 +1055,7 @@ function DotField() {
               ...(isAlive
                 ? {
                     backgroundColor: cellColor,
+                    opacity: 0.72,
                     boxShadow: `0 0 0 1px rgba(158, 179, 194, 0.32), 0 0 16px rgba(27, 59, 111, ${glowAlpha})`,
                   }
                 : undefined),
@@ -1262,18 +1270,47 @@ function ProjectsPage() {
 function AboutPage() {
   return (
     <section className="about-layout" aria-label="About me">
-      <AboutGraphAnimation />
+      <div className="about-animation-column">
+        <AboutGraphAnimation />
+        <p className="about-animation-instruction">
+          Click to pause/unpause the board.
+        </p>
+      </div>
 
       <article className="about-copy-card">
-        <img
-          className="about-photo"
-          src="/headshot.jpg"
-          alt="headshot"
-        />
+        <img className="about-photo" src="/headshot.jpg" alt="headshot" />
 
-        <p className="about-placeholder-copy">
-          placeholder text
-        </p>
+        <div className="about-placeholder-copy">
+          <p>
+            Hey! I&apos;m{" "}
+            <span className="about-name-hover">
+              <span className="about-highlight-name" tabIndex={0}>
+                Amy
+              </span>
+              <span className="about-inline-panel" role="note" aria-label="About Amy">
+                Fun fact: my name&apos;s a palindrome!
+              </span>
+            </span>
+            , a junior at Carnegie Mellon studying Computer Science.
+          </p>
+          <p>
+            Right now, I&apos;m building a genomic language model at{" "}
+            <a
+              className="about-inline-link"
+              href="https://labs.bio.cmu.edu/kaplow/people/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Kaplow Lab
+            </a>
+            . This summer, I&apos;ll be working with LLMs in production at Amazon
+            as a SDE Intern.
+          </p>
+          <p>
+            I love solving puzzles, and a few of my favorites are woven into this
+            site. Check out my projects to see what else I&apos;ve been working on!
+          </p>
+        </div>
       </article>
     </section>
   );
