@@ -3,10 +3,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 const START_DELAY_MS = 1000;
 const RESEED_DELAY_MS = 2000;
 const ABOUT_STEP_INTERVAL_MS = 800;
-const ABOUT_MIN_N = 1;
-const ABOUT_MAX_N = 20;
-const ABOUT_BASE_N = 15;
-const ABOUT_START_N = 15;
+const ABOUT_N_VALUES = [1, 4, 9, 16, 25];
+const ABOUT_BASE_N = 25;
+const ABOUT_START_INDEX = 2;
 const ABOUT_TILE_PALETTE = [
   "#21295C",
   "#1B3B6F",
@@ -47,6 +46,17 @@ const ACM_PATTERN = [
   "1111100100000010101",
   "1000100100000010001",
   "1000100011110010001",
+];
+const NINE_BY_NINE_TILE_KEYS = [
+  ["outer", "arm-light", null, "outer", "outer", "outer", "outer", "outer", "outer"],
+  ["outer", "arm-light", "upper-left", "upper-left", "upper-left", null, "arm-light", "arm-light", "arm-light"],
+  ["outer", "arm-light", "upper-left", "upper-left", "upper-left", "upper-right", "upper-right", "upper-right", null],
+  ["outer", null, "upper-left", "upper-left", "upper-left", "upper-right", "upper-right", "upper-right", "outer"],
+  ["outer", "lower-left", "lower-left", "lower-left", null, "upper-right", "upper-right", "upper-right", "outer"],
+  ["outer", "lower-left", "lower-left", "lower-left", "lower-right", "lower-right", "lower-right", null, "outer"],
+  [null, "lower-left", "lower-left", "lower-left", "lower-right", "lower-right", "lower-right", "arm-light", "outer"],
+  ["arm-light", "arm-light", "arm-light", null, "lower-right", "lower-right", "lower-right", "arm-light", "outer"],
+  ["outer", "outer", "outer", "outer", "outer", "outer", null, "arm-light", "outer"],
 ];
 
 const cvSections = [
@@ -199,7 +209,7 @@ const githubActivityLevels = [
 const contactItems = [
   {
     label: "LinkedIn",
-    href: "https://linkedin.com/in/yourname",
+    href: "https://www.linkedin.com/in/amy-ma-2a07a4388/",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path
@@ -211,7 +221,7 @@ const contactItems = [
   },
   {
     label: "GitHub",
-    href: "https://github.com/yourusername",
+    href: "https://github.com/pebble-fish",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path
@@ -638,6 +648,21 @@ function createEvenPinwheelHoles(n) {
   );
 }
 
+function createSquareHoles(n) {
+  const root = Math.round(Math.sqrt(n));
+
+  return Array.from(
+    { length: n },
+    (_, row) => root * (row % root) + (root - 1 - Math.floor(row / root)),
+  );
+}
+
+function getSquareBlockSize(n) {
+  const root = Math.round(Math.sqrt(n));
+
+  return root % 2 === 0 ? 2 : root;
+}
+
 function getPinwheelTileKey(row, column, n) {
   const centerSize = Math.max(2, Math.round(n / 3));
   const centerStart = Math.floor((n - centerSize) / 2);
@@ -684,6 +709,29 @@ function createOddHoles(n) {
 }
 
 function getTileKey(row, column, n) {
+  if (ABOUT_N_VALUES.includes(n)) {
+    if (n === 9) {
+      return NINE_BY_NINE_TILE_KEYS[row]?.[column] ?? null;
+    }
+
+    const holes = createSquareHoles(n);
+
+    if (holes[row] === column) {
+      return null;
+    }
+
+    const blockSize = getSquareBlockSize(n);
+    const blockRow = Math.floor(row / blockSize);
+    const blockColumn = Math.floor(column / blockSize);
+    const blockGridSize = n / blockSize;
+
+    return `square-${getPinwheelTileKey(blockRow, blockColumn, blockGridSize)}`;
+  }
+
+  if (n === 9) {
+    return NINE_BY_NINE_TILE_KEYS[row]?.[column] ?? null;
+  }
+
   if (n % 2 === 0) {
     const holes = createEvenPinwheelHoles(n);
 
@@ -782,10 +830,25 @@ function createTileColorMap(n) {
 }
 
 function getOddTileKey(row, column, n) {
-  const blockRow = Math.min(2, Math.floor((row * 3) / n));
-  const blockColumn = Math.min(2, Math.floor((column * 3) / n));
+  const center = Math.floor(n / 2);
+  const layer = Math.max(Math.abs(row - center), Math.abs(column - center));
+  const topEdge = row === center - layer;
+  const rightEdge = column === center + layer;
+  const bottomEdge = row === center + layer;
 
-  return `odd-${blockRow}-${blockColumn}`;
+  if (topEdge && column < center + layer) {
+    return `odd-top-${layer}`;
+  }
+
+  if (rightEdge && row < center + layer) {
+    return `odd-right-${layer}`;
+  }
+
+  if (bottomEdge && column > center - layer) {
+    return `odd-bottom-${layer}`;
+  }
+
+  return `odd-left-${layer}`;
 }
 
 function getDotFill(row, column, n, colorMap) {
@@ -799,14 +862,14 @@ function getDotFill(row, column, n, colorMap) {
 
 function AboutGraphAnimation() {
   const [animationState, setAnimationState] = useState({
-    n: ABOUT_START_N,
+    index: ABOUT_START_INDEX,
     direction: -1,
   });
   const [isPaused, setIsPaused] = useState(false);
   const [homepageDotSize, setHomepageDotSize] = useState(() =>
     getHomepageDotBaseSize(),
   );
-  const { n } = animationState;
+  const n = ABOUT_N_VALUES[animationState.index];
 
   useEffect(() => {
     if (isPaused) {
@@ -816,18 +879,18 @@ function AboutGraphAnimation() {
     const intervalId = window.setInterval(() => {
       setAnimationState((currentState) => {
         let nextDirection = currentState.direction;
-        let nextN = currentState.n + currentState.direction;
+        let nextIndex = currentState.index + currentState.direction;
 
-        if (nextN < ABOUT_MIN_N) {
+        if (nextIndex < 0) {
           nextDirection = 1;
-          nextN = ABOUT_MIN_N + 1;
-        } else if (nextN > ABOUT_MAX_N) {
+          nextIndex = 1;
+        } else if (nextIndex >= ABOUT_N_VALUES.length) {
           nextDirection = -1;
-          nextN = ABOUT_MAX_N - 1;
+          nextIndex = ABOUT_N_VALUES.length - 2;
         }
 
         return {
-          n: nextN,
+          index: nextIndex,
           direction: nextDirection,
         };
       });
@@ -915,7 +978,7 @@ function AboutGraphAnimation() {
   );
 }
 
-function DotField() {
+function DotField({ embedded = false }) {
   const [metrics, setMetrics] = useState(() => getGridMetrics());
   const { columns, rows, dotSize, gap } = metrics;
   const [grid, setGrid] = useState(() => createAcmGrid(columns, rows));
@@ -1094,7 +1157,7 @@ function DotField() {
     "Inspired by Conway's Game of Life, this board gives each cell a full life cycle: new infections begin pale, deepen through darker blues, then fade back toward their starting shade before dying. When a cell dies, it bursts into its eight neighboring positions, each with an 0.8 chance of becoming infected. You can also click any point on the board to introduce fresh activity. The simulation advances in 0.8s steps, and when the board fully burns out, a small random cluster of 20 to 28 cells start the process again.";
 
   return (
-    <div className="life-page">
+    <div className={`life-page ${embedded ? "life-page-embedded" : ""}`}>
       <div className="life-board">
         <div className="life-info-hover life-info-hover-caption">
           <div className="life-caption" aria-label={`Currently infected cells: ${infectedCount}`}>
@@ -1120,9 +1183,7 @@ function DotField() {
 
       <footer className="life-footer">
         <div className="life-info-hover">
-          <p className="life-instruction" tabIndex={0}>
-            Click anywhere on the board to introduce new active cells.
-          </p>
+          
           <div className="life-info-panel" role="note" aria-label="About this graphic">
             <p>{lifeDescription}</p>
           </div>
@@ -1308,7 +1369,11 @@ function AboutPage() {
           </p>
           <p>
             I love solving puzzles, and a few of my favorites are woven into this
-            site. Check out my projects to see what else I&apos;ve been working on!
+            site. Check out my{" "}
+            <a className="about-inline-link" href="#projects">
+              projects
+            </a>{" "}
+            to see what else I&apos;ve been working on!
           </p>
         </div>
       </article>
@@ -1319,10 +1384,15 @@ function AboutPage() {
 function ContactPage() {
   return (
     <section className="contact-layout" aria-label="Contact me">
-      <div className="contact-animation-placeholder" aria-label="Animation placeholder" />
+      <div className="contact-animation-placeholder" aria-label="Interactive animation">
+        <DotField embedded />
+      </div>
 
       <div className="contact-content-column">
-        <p className="contact-email-line">email [at] gmail.com</p>
+        <p className="life-instruction" tabIndex={0}>
+            Click anywhere on the board to introduce new active cells.
+        </p>
+        <p className="contact-email-line">amyma [at] cs.cmu.edu</p>
 
         <div className="contact-button-row">
           {contactItems.map((item) => (
@@ -1396,7 +1466,7 @@ function App() {
       </header>
 
       <main className={`content ${currentPage === "home" ? "content-home" : ""}`}>
-        {currentPage === "about" ? (
+        {currentPage === "about" || currentPage === "home" ? (
           <AboutPage />
         ) : currentPage === "cv" ? (
           <CvPage />
@@ -1404,9 +1474,7 @@ function App() {
           <ProjectsPage />
         ) : currentPage === "contact" ? (
           <ContactPage />
-        ) : (
-          <DotField />
-        )}
+        ) : null}
       </main>
     </div>
   );
