@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-const STEP_INTERVAL_MS = 800;
-const START_DELAY_MS = 1250;
+const START_DELAY_MS = 1000;
 const RESEED_DELAY_MS = 2000;
 const ABOUT_STEP_INTERVAL_MS = 800;
 const ABOUT_MIN_N = 1;
@@ -16,15 +15,15 @@ const ABOUT_TILE_PALETTE = [
   "#9EB3C2",
 ];
 const AGE_COLOR_CYCLE = [
-  "#9EB3C2",
-  "#1C7293",
-  "#065A82",
-  "#1B3B6F",
   "#21295C",
   "#1B3B6F",
   "#065A82",
   "#1C7293",
   "#9EB3C2",
+  "#1C7293",
+  "#065A82",
+  "#1B3B6F",
+  "#21295C",
 ];
 const MAX_CELL_AGE = AGE_COLOR_CYCLE.length * 2;
 const EXPLOSION_INFECTION_PROBABILITY = 0.8;
@@ -38,8 +37,8 @@ const DESKTOP_LIFE_TOP_PADDING = 24;
 const MOBILE_LIFE_TOP_PADDING = 12;
 const DESKTOP_LIFE_BOTTOM_PADDING = 88;
 const MOBILE_LIFE_BOTTOM_PADDING = 52;
-const DESKTOP_BOARD_FRAME_HORIZONTAL_PADDING = 54;
-const MOBILE_BOARD_FRAME_HORIZONTAL_PADDING = 34;
+const DESKTOP_BOARD_FRAME_HORIZONTAL_PADDING = 78;
+const MOBILE_BOARD_FRAME_HORIZONTAL_PADDING = 50;
 const DESKTOP_BOARD_FRAME_VERTICAL_PADDING = 38;
 const MOBILE_BOARD_FRAME_VERTICAL_PADDING = 26;
 const CLICK_PATTERN = [
@@ -902,6 +901,7 @@ function AboutGraphAnimation() {
       </svg>
 
       <div className="about-animation-caption">
+        <span>IMO P6 (2025)</span>
         <strong>n = {n}</strong>
       </div>
     </div>
@@ -1010,7 +1010,7 @@ function DotField() {
         activeCountRef.current = activeCount;
         return nextGrid;
       });
-    }, STEP_INTERVAL_MS);
+    }, ABOUT_STEP_INTERVAL_MS);
 
     return () => {
       window.clearInterval(intervalId);
@@ -1078,10 +1078,19 @@ function DotField() {
       }),
     [columns, dotSize, grid, rows],
   );
+  const infectedCount = useMemo(
+    () => grid.reduce((count, value) => count + (value > 0 ? 1 : 0), 0),
+    [grid],
+  );
 
   return (
     <div className="life-page">
       <div className="life-board">
+        <div className="life-caption" aria-label={`Currently infected cells: ${infectedCount}`}>
+          <span>(Not) Conway</span>
+          <strong>n = {infectedCount}</strong>
+        </div>
+
         <div
           className="dot-grid"
           style={{

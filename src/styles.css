@@ -756,12 +756,45 @@ button {
   min-height: 0;
   width: 100%;
   height: 100%;
-  padding: 18px 26px;
+  padding: 18px 38px;
   border: 1px solid #efefea;
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 12px 30px rgba(17, 17, 17, 0.04);
   overflow: hidden;
+}
+
+.life-caption {
+  position: absolute;
+  left: 24px;
+  bottom: 20px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(27, 59, 111, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 10px 24px rgba(17, 17, 17, 0.05);
+  color: #1b3b6f;
+  backdrop-filter: blur(8px);
+}
+
+.life-caption span,
+.life-caption strong {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.life-caption span {
+  color: #5f6e7f;
+}
+
+.life-caption strong {
+  font-weight: 700;
 }
 
 .life-info-panel {
@@ -998,7 +1031,15 @@ button {
   }
 
   .life-board {
-    padding: 12px 16px;
+    padding: 12px 24px;
+  }
+
+  .life-caption {
+    left: 16px;
+    bottom: 14px;
+    gap: 10px;
+    min-height: 34px;
+    padding: 0 12px;
   }
 
   .life-info-panel {
