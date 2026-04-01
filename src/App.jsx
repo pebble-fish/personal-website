@@ -888,7 +888,6 @@ function AboutGraphAnimation() {
         className="about-graph-animation"
         viewBox={`0 0 ${aboutPattern.viewBoxSize} ${aboutPattern.viewBoxSize}`}
         role="img"
-        aria-label={`Animated ${n} by ${n} lattice inspired by the IMO 2025 problem 6 construction`}
       >
         {aboutPattern.dots.map((dot) => (
           <circle
@@ -903,7 +902,6 @@ function AboutGraphAnimation() {
       </svg>
 
       <div className="about-animation-caption">
-        <span>IMO 2025 P6</span>
         <strong>n = {n}</strong>
       </div>
     </div>
@@ -1260,9 +1258,11 @@ function AboutPage() {
       <AboutGraphAnimation />
 
       <article className="about-copy-card">
-        <div className="about-photo-placeholder" aria-label="Photo placeholder">
-          <span>Photo</span>
-        </div>
+        <img
+          className="about-photo"
+          src="/headshot.jpg"
+          alt="headshot"
+        />
 
         <p className="about-placeholder-copy">
           placeholder text
