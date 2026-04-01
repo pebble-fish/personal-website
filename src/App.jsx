@@ -3,6 +3,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 const STEP_INTERVAL_MS = 800;
 const START_DELAY_MS = 1250;
 const RESEED_DELAY_MS = 2000;
+const ABOUT_STEP_INTERVAL_MS = 800;
+const ABOUT_MIN_N = 1;
+const ABOUT_MAX_N = 20;
+const ABOUT_BASE_N = 15;
+const ABOUT_START_N = 15;
+const ABOUT_TILE_PALETTE = [
+  "#21295C",
+  "#1B3B6F",
+  "#065A82",
+  "#1C7293",
+  "#9EB3C2",
+];
 const AGE_COLOR_CYCLE = [
   "#9EB3C2",
   "#1C7293",
@@ -26,6 +38,10 @@ const DESKTOP_LIFE_TOP_PADDING = 24;
 const MOBILE_LIFE_TOP_PADDING = 12;
 const DESKTOP_LIFE_BOTTOM_PADDING = 88;
 const MOBILE_LIFE_BOTTOM_PADDING = 52;
+const DESKTOP_BOARD_FRAME_HORIZONTAL_PADDING = 54;
+const MOBILE_BOARD_FRAME_HORIZONTAL_PADDING = 34;
+const DESKTOP_BOARD_FRAME_VERTICAL_PADDING = 38;
+const MOBILE_BOARD_FRAME_VERTICAL_PADDING = 26;
 const CLICK_PATTERN = [
   [0, 0],
   [1, 0],
@@ -46,8 +62,15 @@ const cvSections = [
     title: "Education",
     entries: [
       {
-        heading: "School Name Placeholder",
-        meta: "City, State",
+        heading: "Carnegie Mellon University",
+        meta: "Pittsburgh, PA",
+        subheading: "Degree, major, concentration, or honors placeholder",
+        detail:
+          "Relevant coursework, thesis, certifications, GPA, or academic notes placeholder.",
+      },
+      {
+        heading: "Lexington High School",
+        meta: "Lexington, MA",
         subheading: "Degree, major, concentration, or honors placeholder",
         detail:
           "Relevant coursework, thesis, certifications, GPA, or academic notes placeholder.",
@@ -317,11 +340,11 @@ function createRandomReseedGrid(columns, rows) {
 
 function getGridMetrics() {
   if (typeof window === "undefined") {
-    return { columns: 0, rows: 0, dotSize: 18, gap: 9 };
+    return { columns: 0, rows: 0, dotSize: getHomepageDotBaseSize(), gap: 9 };
   }
 
   const compactLayout = window.innerWidth <= 720;
-  const dotSize = compactLayout ? 15 : 18;
+  const dotSize = getHomepageDotBaseSize();
   const gap = compactLayout ? 8 : 9;
   const pitch = dotSize + gap;
   const contentPadding = compactLayout
@@ -339,10 +362,19 @@ function getGridMetrics() {
   const lifeBottomPadding = compactLayout
     ? MOBILE_LIFE_BOTTOM_PADDING
     : DESKTOP_LIFE_BOTTOM_PADDING;
+  const boardFrameHorizontalPadding = compactLayout
+    ? MOBILE_BOARD_FRAME_HORIZONTAL_PADDING
+    : DESKTOP_BOARD_FRAME_HORIZONTAL_PADDING;
+  const boardFrameVerticalPadding = compactLayout
+    ? MOBILE_BOARD_FRAME_VERTICAL_PADDING
+    : DESKTOP_BOARD_FRAME_VERTICAL_PADDING;
   const contentWidth = Math.min(1120, window.innerWidth - contentPadding);
   const availableWidth = Math.max(
     pitch * 10,
-    contentWidth - lifeHorizontalPadding - pitch * 2,
+    contentWidth -
+      lifeHorizontalPadding -
+      boardFrameHorizontalPadding -
+      pitch * 2,
   );
   const availableHeight = Math.max(
     pitch * 14,
@@ -350,6 +382,7 @@ function getGridMetrics() {
       topbarHeight -
       lifeTopPadding -
       lifeBottomPadding -
+      boardFrameVerticalPadding -
       pitch * 2,
   );
 
@@ -481,6 +514,400 @@ function getPageFromHash(hash) {
   }
 
   return "home";
+}
+
+function getHomepageDotBaseSize() {
+  if (typeof window === "undefined") {
+    return 18;
+  }
+
+  return window.innerWidth <= 720 ? 15 : 18;
+}
+
+function pushSquare(tiles, x, y, size) {
+  if (size <= 0) {
+    return;
+  }
+
+  tiles.push({ x, y, size });
+}
+
+function tileRectangle(tiles, x, y, width, height, reverse = false) {
+  if (width <= 0 || height <= 0) {
+    return;
+  }
+
+  if (width === height) {
+    if (width <= 2) {
+      pushSquare(tiles, x, y, width);
+      return;
+    }
+
+    const split = Math.ceil(width / 2);
+    const remainder = width - split;
+
+    pushSquare(tiles, x, y, split);
+    if (remainder > 0) {
+      pushSquare(tiles, x + split, y + split, remainder);
+      tileRectangle(tiles, x + split, y, remainder, split, !reverse);
+      tileRectangle(tiles, x, y + split, split, remainder, reverse);
+    }
+    return;
+  }
+
+  if (width > height) {
+    const count = Math.floor(width / height);
+
+    for (let index = 0; index < count; index += 1) {
+      const offset = reverse ? width - height * (index + 1) : height * index;
+      pushSquare(tiles, x + offset, y, height);
+    }
+
+    tileRectangle(
+      tiles,
+      x + (reverse ? 0 : count * height),
+      y,
+      width - count * height,
+      height,
+      !reverse,
+    );
+    return;
+  }
+
+  const count = Math.floor(height / width);
+
+  for (let index = 0; index < count; index += 1) {
+    const offset = reverse ? height - width * (index + 1) : width * index;
+    pushSquare(tiles, x, y + offset, width);
+  }
+
+  tileRectangle(
+    tiles,
+    x,
+    y + (reverse ? 0 : count * width),
+    width,
+    height - count * width,
+    !reverse,
+  );
+}
+
+function createAboutTiles(n) {
+  const cellCount = Math.max(0, n - 1);
+  const tiles = [];
+
+  if (cellCount > 0) {
+    tileRectangle(tiles, 0, 0, cellCount, cellCount);
+  }
+
+  return tiles;
+}
+
+function colorAboutTiles(tiles) {
+  return tiles
+    .map((tile) => ({
+      ...tile,
+      colorIndex: Math.floor(Math.random() * ABOUT_TILE_PALETTE.length),
+    }))
+    .sort((firstTile, secondTile) => secondTile.size - firstTile.size);
+}
+
+function greatestCommonDivisor(firstValue, secondValue) {
+  let left = Math.abs(firstValue);
+  let right = Math.abs(secondValue);
+
+  while (right !== 0) {
+    const remainder = left % right;
+    left = right;
+    right = remainder;
+  }
+
+  return left;
+}
+
+function getCoprimeStep(n, preferredStep) {
+  let step = Math.min(n - 1, Math.max(1, preferredStep));
+
+  while (step > 1) {
+    if (greatestCommonDivisor(step, n) === 1) {
+      return step;
+    }
+
+    step -= 1;
+  }
+
+  return 1;
+}
+
+function createEvenPinwheelHoles(n) {
+  const half = n / 2;
+
+  return Array.from({ length: n }, (_, row) =>
+    row < half ? row * 2 + 1 : (row - half) * 2,
+  );
+}
+
+function getPinwheelTileKey(row, column, n) {
+  const centerSize = Math.max(2, Math.round(n / 3));
+  const centerStart = Math.floor((n - centerSize) / 2);
+  const centerEnd = centerStart + centerSize - 1;
+
+  if (row < centerStart) {
+    return column < centerStart ? "left" : "top";
+  }
+
+  if (column > centerEnd) {
+    return row > centerEnd ? "bottom" : "right";
+  }
+
+  if (row > centerEnd) {
+    return column > centerEnd ? "right" : "bottom";
+  }
+
+  if (column < centerStart) {
+    return "left";
+  }
+
+  return "center";
+}
+
+function getTileColorFromKey(tileKey) {
+  if (tileKey === null) {
+    return null;
+  }
+
+  let hash = 17;
+
+  for (let index = 0; index < tileKey.length; index += 1) {
+    hash = (hash * 33 + tileKey.charCodeAt(index)) % 104729;
+  }
+
+  return hash;
+}
+
+function createOddHoles(n) {
+  const step = getCoprimeStep(n, Math.floor(n / 3));
+  const offset = Math.max(0, Math.floor(n / 3) - 1);
+
+  return Array.from({ length: n }, (_, row) => (row * step + offset) % n);
+}
+
+function getTileKey(row, column, n) {
+  if (n % 2 === 0) {
+    const holes = createEvenPinwheelHoles(n);
+
+    if (holes[row] === column) {
+      return null;
+    }
+
+    return getPinwheelTileKey(row, column, n);
+  }
+
+  const holes = createOddHoles(n);
+
+  if (holes[row] === column) {
+    return null;
+  }
+
+  return getOddTileKey(row, column, n);
+}
+
+function createTileColorMap(n) {
+  const adjacency = new Map();
+
+  const ensureTile = (tileKey) => {
+    if (tileKey !== null && !adjacency.has(tileKey)) {
+      adjacency.set(tileKey, new Set());
+    }
+  };
+
+  for (let row = 0; row < n; row += 1) {
+    for (let column = 0; column < n; column += 1) {
+      const tileKey = getTileKey(row, column, n);
+      ensureTile(tileKey);
+
+      const neighbors = [
+        [row + 1, column],
+        [row, column + 1],
+      ];
+
+      neighbors.forEach(([nextRow, nextColumn]) => {
+        if (nextRow >= n || nextColumn >= n) {
+          return;
+        }
+
+        const neighborKey = getTileKey(nextRow, nextColumn, n);
+        ensureTile(neighborKey);
+
+        if (
+          tileKey === null ||
+          neighborKey === null ||
+          tileKey === neighborKey
+        ) {
+          return;
+        }
+
+        adjacency.get(tileKey)?.add(neighborKey);
+        adjacency.get(neighborKey)?.add(tileKey);
+      });
+    }
+  }
+
+  const orderedTiles = [...adjacency.keys()].sort((firstKey, secondKey) => {
+    const degreeDifference =
+      (adjacency.get(secondKey)?.size ?? 0) - (adjacency.get(firstKey)?.size ?? 0);
+
+    if (degreeDifference !== 0) {
+      return degreeDifference;
+    }
+
+    return getTileColorFromKey(firstKey) - getTileColorFromKey(secondKey);
+  });
+
+  const colorMap = new Map();
+
+  orderedTiles.forEach((tileKey) => {
+    const usedColors = new Set(
+      [...(adjacency.get(tileKey) ?? [])]
+        .map((neighborKey) => colorMap.get(neighborKey))
+        .filter((colorIndex) => colorIndex !== undefined),
+    );
+
+    const preferredOffset = getTileColorFromKey(tileKey) % ABOUT_TILE_PALETTE.length;
+
+    for (let attempt = 0; attempt < ABOUT_TILE_PALETTE.length; attempt += 1) {
+      const colorIndex = (preferredOffset + attempt) % ABOUT_TILE_PALETTE.length;
+
+      if (!usedColors.has(colorIndex)) {
+        colorMap.set(tileKey, colorIndex);
+        return;
+      }
+    }
+
+    colorMap.set(tileKey, preferredOffset);
+  });
+
+  return colorMap;
+}
+
+function getOddTileKey(row, column, n) {
+  const blockRow = Math.min(2, Math.floor((row * 3) / n));
+  const blockColumn = Math.min(2, Math.floor((column * 3) / n));
+
+  return `odd-${blockRow}-${blockColumn}`;
+}
+
+function getDotFill(row, column, n, colorMap) {
+  const tileKey = getTileKey(row, column, n);
+  if (tileKey === null) {
+    return null;
+  }
+
+  return ABOUT_TILE_PALETTE[colorMap.get(tileKey) ?? 0];
+}
+
+function AboutGraphAnimation() {
+  const [animationState, setAnimationState] = useState({
+    n: ABOUT_START_N,
+    direction: -1,
+  });
+  const [homepageDotSize, setHomepageDotSize] = useState(() =>
+    getHomepageDotBaseSize(),
+  );
+  const { n } = animationState;
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setAnimationState((currentState) => {
+        let nextDirection = currentState.direction;
+        let nextN = currentState.n + currentState.direction;
+
+        if (nextN < ABOUT_MIN_N) {
+          nextDirection = 1;
+          nextN = ABOUT_MIN_N + 1;
+        } else if (nextN > ABOUT_MAX_N) {
+          nextDirection = -1;
+          nextN = ABOUT_MAX_N - 1;
+        }
+
+        return {
+          n: nextN,
+          direction: nextDirection,
+        };
+      });
+    }, ABOUT_STEP_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setHomepageDotSize(getHomepageDotBaseSize());
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  const aboutPattern = useMemo(() => {
+    const boardUnits = ABOUT_BASE_N - 1;
+    const colorMap = createTileColorMap(n);
+    const dotDiameter =
+      n > 1 ? homepageDotSize * (boardUnits / (n - 1)) : homepageDotSize * boardUnits;
+    const dotRadius = dotDiameter / 2;
+    const boardSize = homepageDotSize + boardUnits * (homepageDotSize + 9);
+    const viewBoxSize = boardSize + dotDiameter + 32;
+    const boardOrigin = (viewBoxSize - boardSize) / 2;
+    const step = n > 1 ? boardSize / (n - 1) : 0;
+    const dots = Array.from({ length: n * n }, (_, index) => {
+      const row = Math.floor(index / n);
+      const column = index % n;
+
+      return {
+        cx: n > 1 ? boardOrigin + column * step : viewBoxSize / 2,
+        cy: n > 1 ? boardOrigin + row * step : viewBoxSize / 2,
+        fill: getDotFill(row, column, n, colorMap),
+      };
+    });
+
+    return {
+      dots,
+      dotRadius,
+      boardOrigin,
+      viewBoxSize,
+    };
+  }, [homepageDotSize, n]);
+
+  return (
+    <div className="about-animation-placeholder" aria-hidden="true">
+      <svg
+        className="about-graph-animation"
+        viewBox={`0 0 ${aboutPattern.viewBoxSize} ${aboutPattern.viewBoxSize}`}
+        role="img"
+        aria-label={`Animated ${n} by ${n} lattice inspired by the IMO 2025 problem 6 construction`}
+      >
+        {aboutPattern.dots.map((dot) => (
+          <circle
+            key={`${dot.cx}-${dot.cy}`}
+            cx={dot.cx}
+            cy={dot.cy}
+            r={aboutPattern.dotRadius}
+            fill={dot.fill ?? "rgba(120, 126, 120, 0.22)"}
+            fillOpacity={dot.fill === null ? 1 : 0.72}
+          />
+        ))}
+      </svg>
+
+      <div className="about-animation-caption">
+        <span>IMO 2025 P6</span>
+        <strong>n = {n}</strong>
+      </div>
+    </div>
+  );
 }
 
 function DotField() {
@@ -683,7 +1110,7 @@ function DotField() {
               each with an 0.8 chance of becoming infected. You can also click
               any point on the board to introduce fresh activity. The simulation
               advances in 0.8s steps, and when the board fully burns out,
-              a small random cluster of 20 to 30 cells start the process again.
+              a small random cluster of 20 to 28 cells start the process again.
             </p>
           </div>
         </div>
@@ -830,7 +1257,7 @@ function ProjectsPage() {
 function AboutPage() {
   return (
     <section className="about-layout" aria-label="About me">
-      <div className="about-animation-placeholder" aria-label="Animation placeholder" />
+      <AboutGraphAnimation />
 
       <article className="about-copy-card">
         <div className="about-photo-placeholder" aria-label="Photo placeholder">
