@@ -234,6 +234,55 @@ button {
   height: 100%;
 }
 
+.about-view-toggle {
+  position: absolute;
+  right: 24px;
+  bottom: 20px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid rgba(27, 59, 111, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 24px rgba(17, 17, 17, 0.05);
+  color: #1b3b6f;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.about-view-toggle:hover,
+.about-view-toggle:focus-visible {
+  transform: translateY(-1px);
+  background: rgba(245, 248, 252, 0.96);
+  box-shadow: 0 14px 28px rgba(17, 17, 17, 0.08);
+  outline: none;
+}
+
+.about-view-toggle-icon {
+  display: block;
+  background: currentColor;
+}
+
+.about-view-toggle-icon-circle {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+}
+
+.about-view-toggle-icon-rect {
+  width: 18px;
+  height: 12px;
+  border-radius: 5px;
+}
+
 .about-info-hover {
   position: absolute;
   left: 24px;
@@ -593,28 +642,12 @@ button {
   outline: none;
 }
 
-.cv-banner-placeholder {
-  display: grid;
-  place-items: center;
-  min-height: 220px;
-  margin: 88px 0 32px;
-  border: 1px dashed #d8d3c8;
-  border-radius: 32px;
-  background:
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.95), rgba(244, 240, 232, 0.8)),
-    linear-gradient(135deg, rgba(250, 246, 239, 0.8), rgba(255, 255, 255, 0.65));
-  color: #8b8478;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
 .cv-layout {
   display: grid;
   grid-template-columns: minmax(280px, 1fr) minmax(0, 1fr);
   gap: 32px;
   align-items: start;
+  padding-top: 88px;
   padding-bottom: 40px;
 }
 
@@ -631,12 +664,92 @@ button {
   justify-items: start;
 }
 
+.cv-intro-card {
+  width: 100%;
+  border: 1px solid #efefea;
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 243, 236, 0.88));
+  box-shadow: 0 12px 30px rgba(17, 17, 17, 0.04);
+}
+
+.cv-intro-card {
+  display: grid;
+  gap: 18px;
+  padding: 30px;
+  background: #ffffff;
+}
+
+.cv-section-description {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: #49433d;
+}
+
+.cv-highlight-list {
+  display: grid;
+  gap: 14px;
+}
+
+.cv-highlight-item {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid #e6e0d4;
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.cv-highlight-item span {
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #21295c;
+}
+
+.cv-highlight-item strong {
+  font-size: 0.98rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: #3f4a56;
+}
+
 .cv-side-nav {
   display: grid;
-  gap: 0;
-  max-width: 220px;
+  gap: 10px;
+  max-width: 260px;
   width: 100%;
   justify-items: start;
+}
+
+.cv-side-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid #e6e0d4;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.84);
+  color: #3f4a56;
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    background-color 180ms ease;
+}
+
+.cv-side-link:hover,
+.cv-side-link:focus-visible {
+  transform: translateX(2px);
+  border-color: #1b3b6f;
+  background: #f5f8fc;
+  color: #1b3b6f;
+  outline: none;
 }
 
 .github-plugin-card {
@@ -744,7 +857,7 @@ button {
 
 .cv-content {
   display: grid;
-  gap: 0;
+  gap: 20px;
 }
 
 .cv-section-card {
@@ -958,6 +1071,16 @@ button {
   max-height: 100%;
 }
 
+.life-blob-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: visible;
+}
+
 .life-footer {
   display: flex;
   align-items: center;
@@ -1002,6 +1125,8 @@ button {
 }
 
 .dot {
+  position: relative;
+  z-index: 0;
   padding: 0;
   border: none;
   border-radius: 999px;
@@ -1074,6 +1199,11 @@ button {
     padding: 14px;
   }
 
+  .about-view-toggle {
+    right: 14px;
+    bottom: 14px;
+  }
+
   .about-animation-caption {
     left: 14px;
     right: 14px;
@@ -1097,6 +1227,7 @@ button {
 
   .cv-layout {
     grid-template-columns: 1fr;
+    padding-top: 56px;
   }
 
   .projects-feature-row {
@@ -1141,7 +1272,7 @@ button {
   }
 
   .cv-section-card {
-    padding: 24px 0;
+    padding: 24px;
   }
 
   .content-card {

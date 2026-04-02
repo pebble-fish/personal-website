@@ -6,6 +6,7 @@ const ABOUT_STEP_INTERVAL_MS = 800;
 const ABOUT_N_VALUES = [1, 4, 9, 16, 25];
 const ABOUT_BASE_N = 25;
 const ABOUT_START_INDEX = 2;
+const ABOUT_TILE_OPACITY = 0.72;
 const ABOUT_TILE_PALETTE = [
   "#21295C",
   "#1B3B6F",
@@ -13,6 +14,7 @@ const ABOUT_TILE_PALETTE = [
   "#1C7293",
   "#9EB3C2",
 ];
+const ABOUT_NEUTRAL_DOT_FILL = "rgba(120, 126, 120, 0.22)";
 const AGE_COLOR_CYCLE = [
   ...ABOUT_TILE_PALETTE,
   ...ABOUT_TILE_PALETTE.slice(0, -1).reverse(),
@@ -47,21 +49,85 @@ const ACM_PATTERN = [
   "1000100100000010001",
   "1000100011110010001",
 ];
-const NINE_BY_NINE_TILE_KEYS = [
-  ["outer", "arm-light", null, "outer", "outer", "outer", "outer", "outer", "outer"],
-  ["outer", "arm-light", "upper-left", "upper-left", "upper-left", null, "arm-light", "arm-light", "arm-light"],
-  ["outer", "arm-light", "upper-left", "upper-left", "upper-left", "upper-right", "upper-right", "upper-right", null],
-  ["outer", null, "upper-left", "upper-left", "upper-left", "upper-right", "upper-right", "upper-right", "outer"],
-  ["outer", "lower-left", "lower-left", "lower-left", null, "upper-right", "upper-right", "upper-right", "outer"],
-  ["outer", "lower-left", "lower-left", "lower-left", "lower-right", "lower-right", "lower-right", null, "outer"],
-  [null, "lower-left", "lower-left", "lower-left", "lower-right", "lower-right", "lower-right", "arm-light", "outer"],
-  ["arm-light", "arm-light", "arm-light", null, "lower-right", "lower-right", "lower-right", "arm-light", "outer"],
-  ["outer", "outer", "outer", "outer", "outer", "outer", null, "arm-light", "outer"],
-];
+const ABOUT_LAYOUT_SYMBOLS = {
+  A: ABOUT_TILE_PALETTE[0],
+  B: ABOUT_TILE_PALETTE[1],
+  C: ABOUT_TILE_PALETTE[2],
+  D: ABOUT_TILE_PALETTE[3],
+  E: ABOUT_TILE_PALETTE[4],
+  ".": null,
+};
+
+const ABOUT_TILING_LAYOUTS = {
+  1: ["."],
+  4: [
+    "EE .E",
+    ".B BE",
+    "EB B.",
+    "E. EE",
+  ],
+  9: [
+    "EEE BBB .BB",
+    "EEE .EE EBB",
+    ".BB BEE EBB",
+    "EBB BEE E.E",
+    "EBB B.B BBE",
+    "E.E EEB BBE",
+    "BBE EEB BB.",
+    "BBE EE. EEE",
+    "BB. BBB EEE",
+  ],
+  16: [
+    "EEEE BBBB EEEE .EEE",
+    "EEEE BBBB .BBB BEEE",
+    "EEEE .EEE EBBB BEEE",
+    ".BBB BEEE EBBB BEEE",
+    "EBBB BEEE EBBB B.BB",
+    "EBBB BEEE E.EE EEBB",
+    "EBBB B.BB BBEE EEBB",
+    "E.EE EEBB BBEE EEBB",
+    "BBEE EEBB BBEE EE.E",
+    "BBEE EEBB BB.B BBBE",
+    "BBEE EE.E EEEB BBBE",
+    "BB.B BBBE EEEB BBBE",
+    "EEEB BBBE EEEB BBB.",
+    "EEEB BBBE EEE. EEEE",
+    "EEEB BBB. BBBB EEEE",
+    "EEE. EEEE BBBB EEEE",
+  ],
+  25: [
+    "EEEEE EEEEE EEEEE EEEEE .EEEE",
+    "EEEEE EEEEE EEEEE .EEEE EEEEE",
+    "EEEEE EEEEE .EEEE EEEEE EEEEE",
+    "EEEEE .EEEE EEEEE EEEEE EEEEE",
+    ".EEEE EEEEE EEEEE EEEEE EEEEE",
+    "EEEEE EEEEE EEEEE EEEEE E.EEE",
+    "EEEEE EEEEE EEEEE B.EEE EEEEE",
+    "EEEEE EEEEE E.EEE EEEEE EEEEE",
+    "EEEEE E.BBB BBEEE EEEEE EEEEE",
+    "E.EEE EEBBB BBEEE EEEEE EEEEE",
+    "EEEEE EEBBB BBEEE EEEEE EE.EE",
+    "EEEEE EEBBB BBEEE EE.EE EEEEE",
+    "EEEEE EEBBB BB.BB BBBEE EEEEE",
+    "EEEEE EE.EE EEEBB BBBEE EEEEE",
+    "EE.EE EEEEE EEEBB BBBEE EEEEE",
+    "EEEEE EEEEE EEEBB BBBEE EEE.E",
+    "EEEEE EEEEE EEEBB BBB.E EEEEE",
+    "EEEEE EEEEE EEE.E EEEEE EEEEE",
+    "EEEEE EEE.E EEEEE EEEEE EEEEE",
+    "EEE.E EEEEE EEEEE EEEEE EEEEE",
+    "EEEEE EEEEE EEEEE EEEEE EEEE.",
+    "EEEEE EEEEE EEEEE EEEE. EEEEE",
+    "EEEEE EEEEE EEEE. EEEEE EEEEE",
+    "EEEEE EEEE. EEEEE EEEEE EEEEE",
+    "EEEE. EEEEE EEEEE EEEEE EEEEE",
+  ],
+};
 
 const cvSections = [
   {
     title: "Education",
+    description: "Degrees, institutions, honors, and academic context.",
     entries: [
       {
         heading: "Carnegie Mellon University",
@@ -81,6 +147,7 @@ const cvSections = [
   },
   {
     title: "Skills",
+    description: "Technical strengths, tools, and adjacent capabilities.",
     entries: [
       {
         heading: "Technical Tools",
@@ -98,6 +165,7 @@ const cvSections = [
   },
   {
     title: "Experience",
+    description: "Roles, internships, and the outcomes that matter most.",
     entries: [
       {
         heading: "Role Title Placeholder",
@@ -124,6 +192,7 @@ const cvSections = [
   },
   {
     title: "Projects",
+    description: "Selected work with enough detail to show range and depth.",
     entries: [
       {
         heading: "Project Title Placeholder",
@@ -145,6 +214,7 @@ const cvSections = [
   },
   {
     title: "Programs",
+    description: "Fellowships, cohorts, and notable programs.",
     entries: [
       {
         heading: "Program Name Placeholder",
@@ -160,6 +230,7 @@ const cvSections = [
   },
   {
     title: "Awards",
+    description: "Recognition, scholarships, distinctions, and honors.",
     entries: [
       {
         heading: "Award Title Placeholder",
@@ -174,6 +245,21 @@ const cvSections = [
         meta: "Year",
       },
     ],
+  },
+];
+
+const cvHighlights = [
+  {
+    label: "Target Roles",
+    value: "Software engineering, applied AI/ML, and research-oriented internships",
+  },
+  {
+    label: "Core Skills",
+    value: "Python, JavaScript, React, machine learning, research, and technical problem-solving",
+  },
+  {
+    label: "What I Bring",
+    value: "Strong analytical thinking, hands-on project execution, and clear communication across teams",
   },
 ];
 
@@ -268,6 +354,16 @@ const pages = {
     accent:
       "Each project can eventually become its own card, image block, or linked detail page.",
   },
+  art: {
+    key: "art",
+    label: "Art",
+    eyebrow: "Art",
+    title: "A space for visual work.",
+    body:
+      "Use this page for drawings, photography, design studies, or any creative work you want to show alongside your technical projects.",
+    accent:
+      "A gallery grid, featured pieces, or a short artist statement would all fit nicely here.",
+  },
   contact: {
     key: "contact",
     label: "Contact Me",
@@ -284,6 +380,7 @@ const navItems = [
   { label: "About Me", hash: "#about", page: "about" },
   { label: "CV", hash: "#cv", page: "cv" },
   { label: "Projects", hash: "#projects", page: "projects" },
+  { label: "Art", hash: "#art", page: "art" },
   { label: "Contact Me", hash: "#contact", page: "contact" },
 ];
 
@@ -701,163 +798,74 @@ function getTileColorFromKey(tileKey) {
   return hash;
 }
 
-function createOddHoles(n) {
-  const step = getCoprimeStep(n, Math.floor(n / 3));
-  const offset = Math.max(0, Math.floor(n / 3) - 1);
-
-  return Array.from({ length: n }, (_, row) => (row * step + offset) % n);
+function getAboutLayout(n) {
+  return ABOUT_TILING_LAYOUTS[n].map((row) =>
+    row.replaceAll(" ", "").split("").map((symbol) => ABOUT_LAYOUT_SYMBOLS[symbol]),
+  );
 }
 
-function getTileKey(row, column, n) {
-  if (ABOUT_N_VALUES.includes(n)) {
-    if (n === 9) {
-      return NINE_BY_NINE_TILE_KEYS[row]?.[column] ?? null;
-    }
+function getAboutRectangles(layout) {
+  const rowCount = layout.length;
+  const columnCount = layout[0]?.length ?? 0;
+  const visited = Array.from({ length: rowCount }, () =>
+    Array.from({ length: columnCount }, () => false),
+  );
+  const rectangles = [];
 
-    const holes = createSquareHoles(n);
+  for (let row = 0; row < rowCount; row += 1) {
+    for (let column = 0; column < columnCount; column += 1) {
+      const fill = layout[row]?.[column] ?? null;
 
-    if (holes[row] === column) {
-      return null;
-    }
+      if (fill === null || visited[row][column]) {
+        continue;
+      }
 
-    const blockSize = getSquareBlockSize(n);
-    const blockRow = Math.floor(row / blockSize);
-    const blockColumn = Math.floor(column / blockSize);
-    const blockGridSize = n / blockSize;
+      let width = 1;
 
-    return `square-${getPinwheelTileKey(blockRow, blockColumn, blockGridSize)}`;
-  }
+      while (
+        column + width < columnCount &&
+        layout[row][column + width] === fill &&
+        !visited[row][column + width]
+      ) {
+        width += 1;
+      }
 
-  if (n === 9) {
-    return NINE_BY_NINE_TILE_KEYS[row]?.[column] ?? null;
-  }
+      let height = 1;
+      let canExtend = true;
 
-  if (n % 2 === 0) {
-    const holes = createEvenPinwheelHoles(n);
-
-    if (holes[row] === column) {
-      return null;
-    }
-
-    return getPinwheelTileKey(row, column, n);
-  }
-
-  const holes = createOddHoles(n);
-
-  if (holes[row] === column) {
-    return null;
-  }
-
-  return getOddTileKey(row, column, n);
-}
-
-function createTileColorMap(n) {
-  const adjacency = new Map();
-
-  const ensureTile = (tileKey) => {
-    if (tileKey !== null && !adjacency.has(tileKey)) {
-      adjacency.set(tileKey, new Set());
-    }
-  };
-
-  for (let row = 0; row < n; row += 1) {
-    for (let column = 0; column < n; column += 1) {
-      const tileKey = getTileKey(row, column, n);
-      ensureTile(tileKey);
-
-      const neighbors = [
-        [row + 1, column],
-        [row, column + 1],
-      ];
-
-      neighbors.forEach(([nextRow, nextColumn]) => {
-        if (nextRow >= n || nextColumn >= n) {
-          return;
+      while (row + height < rowCount && canExtend) {
+        for (let offset = 0; offset < width; offset += 1) {
+          if (
+            layout[row + height][column + offset] !== fill ||
+            visited[row + height][column + offset]
+          ) {
+            canExtend = false;
+            break;
+          }
         }
 
-        const neighborKey = getTileKey(nextRow, nextColumn, n);
-        ensureTile(neighborKey);
-
-        if (
-          tileKey === null ||
-          neighborKey === null ||
-          tileKey === neighborKey
-        ) {
-          return;
+        if (canExtend) {
+          height += 1;
         }
+      }
 
-        adjacency.get(tileKey)?.add(neighborKey);
-        adjacency.get(neighborKey)?.add(tileKey);
+      for (let rowOffset = 0; rowOffset < height; rowOffset += 1) {
+        for (let columnOffset = 0; columnOffset < width; columnOffset += 1) {
+          visited[row + rowOffset][column + columnOffset] = true;
+        }
+      }
+
+      rectangles.push({
+        fill,
+        row,
+        column,
+        width,
+        height,
       });
     }
   }
 
-  const orderedTiles = [...adjacency.keys()].sort((firstKey, secondKey) => {
-    const degreeDifference =
-      (adjacency.get(secondKey)?.size ?? 0) - (adjacency.get(firstKey)?.size ?? 0);
-
-    if (degreeDifference !== 0) {
-      return degreeDifference;
-    }
-
-    return getTileColorFromKey(firstKey) - getTileColorFromKey(secondKey);
-  });
-
-  const colorMap = new Map();
-
-  orderedTiles.forEach((tileKey) => {
-    const usedColors = new Set(
-      [...(adjacency.get(tileKey) ?? [])]
-        .map((neighborKey) => colorMap.get(neighborKey))
-        .filter((colorIndex) => colorIndex !== undefined),
-    );
-
-    const preferredOffset = getTileColorFromKey(tileKey) % ABOUT_TILE_PALETTE.length;
-
-    for (let attempt = 0; attempt < ABOUT_TILE_PALETTE.length; attempt += 1) {
-      const colorIndex = (preferredOffset + attempt) % ABOUT_TILE_PALETTE.length;
-
-      if (!usedColors.has(colorIndex)) {
-        colorMap.set(tileKey, colorIndex);
-        return;
-      }
-    }
-
-    colorMap.set(tileKey, preferredOffset);
-  });
-
-  return colorMap;
-}
-
-function getOddTileKey(row, column, n) {
-  const center = Math.floor(n / 2);
-  const layer = Math.max(Math.abs(row - center), Math.abs(column - center));
-  const topEdge = row === center - layer;
-  const rightEdge = column === center + layer;
-  const bottomEdge = row === center + layer;
-
-  if (topEdge && column < center + layer) {
-    return `odd-top-${layer}`;
-  }
-
-  if (rightEdge && row < center + layer) {
-    return `odd-right-${layer}`;
-  }
-
-  if (bottomEdge && column > center - layer) {
-    return `odd-bottom-${layer}`;
-  }
-
-  return `odd-left-${layer}`;
-}
-
-function getDotFill(row, column, n, colorMap) {
-  const tileKey = getTileKey(row, column, n);
-  if (tileKey === null) {
-    return null;
-  }
-
-  return ABOUT_TILE_PALETTE[colorMap.get(tileKey) ?? 0];
+  return rectangles;
 }
 
 function AboutGraphAnimation() {
@@ -866,6 +874,7 @@ function AboutGraphAnimation() {
     direction: -1,
   });
   const [isPaused, setIsPaused] = useState(false);
+  const [showMergedTiles, setShowMergedTiles] = useState(true);
   const [homepageDotSize, setHomepageDotSize] = useState(() =>
     getHomepageDotBaseSize(),
   );
@@ -915,7 +924,7 @@ function AboutGraphAnimation() {
 
   const aboutPattern = useMemo(() => {
     const boardUnits = ABOUT_BASE_N - 1;
-    const colorMap = createTileColorMap(n);
+    const layout = getAboutLayout(n);
     const dotDiameter =
       n > 1 ? homepageDotSize * (boardUnits / (n - 1)) : homepageDotSize * boardUnits;
     const dotRadius = dotDiameter / 2;
@@ -923,21 +932,43 @@ function AboutGraphAnimation() {
     const viewBoxSize = boardSize + dotDiameter + 32;
     const boardOrigin = (viewBoxSize - boardSize) / 2;
     const step = n > 1 ? boardSize / (n - 1) : 0;
-    const dots = Array.from({ length: n * n }, (_, index) => {
-      const row = Math.floor(index / n);
-      const column = index % n;
+    const coloredDots = [];
+    const neutralDots = [];
 
-      return {
-        cx: n > 1 ? boardOrigin + column * step : viewBoxSize / 2,
-        cy: n > 1 ? boardOrigin + row * step : viewBoxSize / 2,
-        fill: getDotFill(row, column, n, colorMap),
-      };
+    layout.forEach((layoutRow, row) => {
+      layoutRow.forEach((fill, column) => {
+        const dot = {
+          cx: n > 1 ? boardOrigin + column * step : viewBoxSize / 2,
+          cy: n > 1 ? boardOrigin + row * step : viewBoxSize / 2,
+        };
+
+        if (fill === null) {
+          neutralDots.push(dot);
+          return;
+        }
+
+        coloredDots.push({
+          ...dot,
+          fill,
+        });
+      });
     });
 
+    const tiles = getAboutRectangles(layout).map((tile) => ({
+      ...tile,
+      x:
+        (n > 1 ? boardOrigin + tile.column * step : viewBoxSize / 2) - dotRadius,
+      y: (n > 1 ? boardOrigin + tile.row * step : viewBoxSize / 2) - dotRadius,
+      width: dotDiameter + (tile.width - 1) * step,
+      height: dotDiameter + (tile.height - 1) * step,
+      radius: Math.min(dotRadius * 1.2, dotDiameter * 0.45),
+    }));
+
     return {
-      dots,
+      coloredDots,
+      neutralDots,
+      tiles,
       dotRadius,
-      boardOrigin,
       viewBoxSize,
     };
   }, [homepageDotSize, n]);
@@ -945,25 +976,63 @@ function AboutGraphAnimation() {
   return (
     <div
       className="about-animation-placeholder"
-      aria-hidden="true"
       onClick={() => setIsPaused((current) => !current)}
     >
       <svg
         className="about-graph-animation"
         viewBox={`0 0 ${aboutPattern.viewBoxSize} ${aboutPattern.viewBoxSize}`}
         role="img"
+        aria-label={`IMO P6 tiling for n equals ${n}`}
       >
-        {aboutPattern.dots.map((dot) => (
+        {showMergedTiles
+          ? aboutPattern.tiles.map((tile) => (
+              <rect
+                key={`${tile.row}-${tile.column}-${tile.width}-${tile.height}`}
+                x={tile.x}
+                y={tile.y}
+                width={tile.width}
+                height={tile.height}
+                rx={tile.radius}
+                fill={tile.fill}
+                fillOpacity={ABOUT_TILE_OPACITY}
+              />
+            ))
+          : aboutPattern.coloredDots.map((dot) => (
+              <circle
+                key={`${dot.cx}-${dot.cy}-${dot.fill}`}
+                cx={dot.cx}
+                cy={dot.cy}
+                r={aboutPattern.dotRadius}
+                fill={dot.fill}
+                fillOpacity={ABOUT_TILE_OPACITY}
+              />
+            ))}
+        {aboutPattern.neutralDots.map((dot) => (
           <circle
             key={`${dot.cx}-${dot.cy}`}
             cx={dot.cx}
             cy={dot.cy}
             r={aboutPattern.dotRadius}
-            fill={dot.fill ?? "rgba(120, 126, 120, 0.22)"}
-            fillOpacity={dot.fill === null ? 1 : 0.72}
+            fill={ABOUT_NEUTRAL_DOT_FILL}
           />
         ))}
       </svg>
+
+      <button
+        type="button"
+        className="about-view-toggle"
+        aria-label={showMergedTiles ? "Switch to dot view" : "Switch to merged rectangle view"}
+        onClick={(event) => {
+          event.stopPropagation();
+          setShowMergedTiles((current) => !current);
+        }}
+      >
+        {showMergedTiles ? (
+          <span className="about-view-toggle-icon about-view-toggle-icon-circle" aria-hidden="true" />
+        ) : (
+          <span className="about-view-toggle-icon about-view-toggle-icon-rect" aria-hidden="true" />
+        )}
+      </button>
 
       <div className="about-info-hover">
         <div className="about-animation-caption" tabIndex={0}>
@@ -1091,6 +1160,94 @@ function DotField({ embedded = false }) {
     };
   }, [columns, hasStarted, rows]);
 
+  const activeDots = useMemo(
+    () =>
+      Array.from({ length: columns * rows }, (_, index) => {
+        const age = grid[index];
+
+        if (age <= 0) {
+          return null;
+        }
+
+        const row = Math.floor(index / columns);
+        const column = index % columns;
+        const colorIndex = Math.floor((age - 1) / 2) % AGE_COLOR_CYCLE.length;
+        const cycleDepth = Math.min(
+          colorIndex,
+          AGE_COLOR_CYCLE.length - 1 - colorIndex,
+        );
+
+        return {
+          index,
+          row,
+          column,
+          cx: column * (dotSize + gap) + dotSize / 2,
+          cy: row * (dotSize + gap) + dotSize / 2,
+          fill: AGE_COLOR_CYCLE[colorIndex],
+          glowAlpha: Math.min(0.3, 0.14 + cycleDepth * 0.05),
+        };
+      }).filter(Boolean),
+    [columns, dotSize, gap, grid, rows],
+  );
+
+  const activeComponents = useMemo(() => {
+    const visited = new Set();
+    const dotsByIndex = new Map(activeDots.map((dot) => [dot.index, dot]));
+    const components = [];
+
+    activeDots.forEach((dot) => {
+      if (visited.has(dot.index)) {
+        return;
+      }
+
+      const stack = [dot];
+      const component = [];
+      visited.add(dot.index);
+
+      while (stack.length > 0) {
+        const current = stack.pop();
+        component.push(current);
+
+        for (let rowOffset = -1; rowOffset <= 1; rowOffset += 1) {
+          for (let columnOffset = -1; columnOffset <= 1; columnOffset += 1) {
+            if (rowOffset === 0 && columnOffset === 0) {
+              continue;
+            }
+
+            const nextRow = current.row + rowOffset;
+            const nextColumn = current.column + columnOffset;
+
+            if (
+              nextRow < 0 ||
+              nextRow >= rows ||
+              nextColumn < 0 ||
+              nextColumn >= columns
+            ) {
+              continue;
+            }
+
+            const nextIndex = nextRow * columns + nextColumn;
+            const nextDot = dotsByIndex.get(nextIndex);
+
+            if (!nextDot || visited.has(nextIndex)) {
+              continue;
+            }
+
+            visited.add(nextIndex);
+            stack.push(nextDot);
+          }
+        }
+      }
+
+      components.push(component);
+    });
+
+    return components;
+  }, [activeDots, columns, rows]);
+
+  const gridWidth = columns > 0 ? columns * dotSize + (columns - 1) * gap : 0;
+  const gridHeight = rows > 0 ? rows * dotSize + (rows - 1) * gap : 0;
+
   const cells = useMemo(
     () =>
       Array.from({ length: columns * rows }, (_, index) => {
@@ -1117,9 +1274,9 @@ function DotField({ embedded = false }) {
               height: `${dotSize}px`,
               ...(isAlive
                 ? {
-                    backgroundColor: cellColor,
-                    opacity: 0.72,
-                    boxShadow: `0 0 0 1px rgba(158, 179, 194, 0.32), 0 0 16px rgba(27, 59, 111, ${glowAlpha})`,
+                    backgroundColor: "transparent",
+                    opacity: 1,
+                    boxShadow: "none",
                   }
                 : undefined),
             }}
@@ -1172,11 +1329,70 @@ function DotField({ embedded = false }) {
         <div
           className="dot-grid"
           style={{
+            width: `${gridWidth}px`,
+            height: `${gridHeight}px`,
             gap: `${gap}px`,
             gridTemplateColumns: `repeat(${columns}, ${dotSize}px)`,
             gridTemplateRows: `repeat(${rows}, ${dotSize}px)`,
           }}
         >
+          <svg
+            className="life-blob-layer"
+            viewBox={`0 0 ${gridWidth} ${gridHeight}`}
+            aria-hidden="true"
+          >
+            <defs>
+              <filter id="life-blob-goo">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="4.5" result="blur" />
+                <feColorMatrix
+                  in="blur"
+                  mode="matrix"
+                  values="
+                    1 0 0 0 0
+                    0 1 0 0 0
+                    0 0 1 0 0
+                    0 0 0 24 -10
+                  "
+                  result="goo"
+                />
+                <feBlend in="SourceGraphic" in2="goo" />
+              </filter>
+            </defs>
+
+            {activeComponents.map((component, componentIndex) => (
+              <g key={`component-${componentIndex}`} filter="url(#life-blob-goo)">
+                {component.map((dot) => (
+                  <circle
+                    key={dot.index}
+                    cx={dot.cx}
+                    cy={dot.cy}
+                    r={dotSize / 2}
+                    fill={dot.fill}
+                    fillOpacity={0.72}
+                  />
+                ))}
+              </g>
+            ))}
+
+            {activeComponents.map((component, componentIndex) => (
+              <g key={`component-glow-${componentIndex}`}>
+                {component.map((dot) => (
+                  <circle
+                    key={`glow-${dot.index}`}
+                    cx={dot.cx}
+                    cy={dot.cy}
+                    r={dotSize / 2}
+                    fill="none"
+                    stroke="rgba(158, 179, 194, 0.32)"
+                    strokeWidth="1"
+                    style={{
+                      filter: `drop-shadow(0 0 16px rgba(27, 59, 111, ${dot.glowAlpha}))`,
+                    }}
+                  />
+                ))}
+              </g>
+            ))}
+          </svg>
           {cells}
         </div>
       </div>
@@ -1194,54 +1410,58 @@ function DotField({ embedded = false }) {
 }
 
 function CvPage() {
-  const [activeSectionTitle, setActiveSectionTitle] = useState(cvSections[0].title);
-  const activeSection =
-    cvSections.find((section) => section.title === activeSectionTitle) ?? cvSections[0];
+  const sectionLinks = cvSections.map((section) => ({
+    id: toSectionId(section.title),
+    title: section.title,
+  }));
 
   return (
-    <>
-      <section className="cv-banner-placeholder" aria-label="Animation placeholder">
-        <span>Animation Banner</span>
-      </section>
-
-      <section className="cv-layout" aria-label="Curriculum vitae">
-        <aside className="cv-sidebar">
-          <div className="cv-sidebar-inner">
-            <p className="section-eyebrow">Jump To</p>
-            <nav className="cv-side-nav" aria-label="CV section navigation">
-              {cvSections.map((section) => (
-                <button
-                  key={section.title}
-                  type="button"
-                  className={`side-nav-pill ${
-                    activeSectionTitle === section.title ? "is-active" : ""
-                  }`}
-                  onClick={() => setActiveSectionTitle(section.title)}
-                >
-                  {section.title}
-                </button>
+    <section className="cv-layout" aria-label="Curriculum vitae">
+      <aside className="cv-sidebar">
+        <div className="cv-sidebar-inner">
+          <article className="cv-intro-card">
+            <div className="cv-highlight-list" aria-label="CV highlights">
+              {cvHighlights.map((item) => (
+                <div key={item.label} className="cv-highlight-item">
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </div>
               ))}
-            </nav>
-          </div>
-        </aside>
-
-        <div className="cv-content">
-          <section
-            key={activeSection.title}
-            id={toSectionId(activeSection.title)}
-            className="cv-section-card"
-          >
-            <div className="cv-section-header">
-              <h2 className="cv-section-title">{activeSection.title}</h2>
-              <div className="cv-section-divider" />
             </div>
+          </article>
+
+          <nav className="cv-side-nav" aria-label="CV sections">
+            {sectionLinks.map((section) => (
+              <a key={section.id} className="cv-side-link" href={`#${section.id}`}>
+                {section.title}
+              </a>
+            ))}
+          </nav>
+        </div>
+      </aside>
+
+      <div className="cv-content">
+        {cvSections.map((section) => (
+          <section
+            key={section.title}
+            id={toSectionId(section.title)}
+            className="cv-section-card"
+            aria-labelledby={`${toSectionId(section.title)}-title`}
+          >
+            <header className="cv-section-header">
+              <p className="section-eyebrow">Section</p>
+              <h2 id={`${toSectionId(section.title)}-title`} className="cv-section-title">
+                {section.title}
+              </h2>
+              {section.description ? (
+                <p className="cv-section-description">{section.description}</p>
+              ) : null}
+              <div className="cv-section-divider" />
+            </header>
 
             <div className="cv-section-body">
-              {activeSection.entries.map((entry) => (
-                <article
-                  key={`${activeSection.title}-${entry.heading}-${entry.meta ?? ""}`}
-                  className="cv-entry"
-                >
+              {section.entries.map((entry) => (
+                <article key={`${section.title}-${entry.heading}`} className="cv-entry">
                   <div className="cv-entry-top">
                     <h3>{entry.heading}</h3>
                     {entry.meta ? <p className="cv-meta">{entry.meta}</p> : null}
@@ -1253,7 +1473,7 @@ function CvPage() {
 
                   {entry.detail ? <p className="cv-detail">{entry.detail}</p> : null}
 
-                  {entry.bullets ? (
+                  {entry.bullets?.length ? (
                     <ul className="cv-bullets">
                       {entry.bullets.map((bullet) => (
                         <li key={bullet}>{bullet}</li>
@@ -1264,9 +1484,9 @@ function CvPage() {
               ))}
             </div>
           </section>
-        </div>
-      </section>
-    </>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -1328,13 +1548,34 @@ function ProjectsPage() {
   );
 }
 
+function ArtPage() {
+  const artPage = pages.art;
+
+  return (
+    <>
+      <section className="page-hero">
+        <p className="hero-kicker">{artPage.eyebrow}</p>
+        <h1>{artPage.title}</h1>
+        <p className="hero-copy">{artPage.body}</p>
+      </section>
+
+      <section className="page-panel">
+        <article className="content-card">
+          <h2>Work In Progress</h2>
+          <p>{artPage.accent}</p>
+        </article>
+      </section>
+    </>
+  );
+}
+
 function AboutPage() {
   return (
     <section className="about-layout" aria-label="About me">
       <div className="about-animation-column">
         <AboutGraphAnimation />
         <p className="about-animation-instruction">
-          Click to pause/unpause the board.
+          Click the button to switch views, or click the board to pause.
         </p>
       </div>
 
@@ -1369,7 +1610,7 @@ function AboutPage() {
           </p>
           <p>
             I love solving puzzles, and a few of my favorites are woven into this
-            site. Check out my{" "}
+            site (hover over their title to see a brief decription!). Check out my{" "}
             <a className="about-inline-link" href="#projects">
               projects
             </a>{" "}
@@ -1472,6 +1713,8 @@ function App() {
           <CvPage />
         ) : currentPage === "projects" ? (
           <ProjectsPage />
+        ) : currentPage === "art" ? (
+          <ArtPage />
         ) : currentPage === "contact" ? (
           <ContactPage />
         ) : null}
