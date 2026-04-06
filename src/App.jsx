@@ -96,31 +96,31 @@ const ABOUT_TILING_LAYOUTS = {
     "EEE. EEEE BBBB EEEE",
   ],
   25: [
-    "EEEEE EEEEE EEEEE EEEEE .EEEE",
-    "EEEEE EEEEE EEEEE .EEEE EEEEE",
-    "EEEEE EEEEE .EEEE EEEEE EEEEE",
-    "EEEEE .EEEE EEEEE EEEEE EEEEE",
-    ".EEEE EEEEE EEEEE EEEEE EEEEE",
-    "EEEEE EEEEE EEEEE EEEEE E.EEE",
-    "EEEEE EEEEE EEEEE B.EEE EEEEE",
-    "EEEEE EEEEE E.EEE EEEEE EEEEE",
-    "EEEEE E.BBB BBEEE EEEEE EEEEE",
-    "E.EEE EEBBB BBEEE EEEEE EEEEE",
-    "EEEEE EEBBB BBEEE EEEEE EE.EE",
-    "EEEEE EEBBB BBEEE EE.EE EEEEE",
-    "EEEEE EEBBB BB.BB BBBEE EEEEE",
-    "EEEEE EE.EE EEEBB BBBEE EEEEE",
-    "EE.EE EEEEE EEEBB BBBEE EEEEE",
-    "EEEEE EEEEE EEEBB BBBEE EEE.E",
-    "EEEEE EEEEE EEEBB BBB.E EEEEE",
-    "EEEEE EEEEE EEE.E EEEEE EEEEE",
-    "EEEEE EEE.E EEEEE EEEEE EEEEE",
-    "EEE.E EEEEE EEEEE EEEEE EEEEE",
-    "EEEEE EEEEE EEEEE EEEEE EEEE.",
-    "EEEEE EEEEE EEEEE EEEE. EEEEE",
-    "EEEEE EEEEE EEEE. EEEEE EEEEE",
-    "EEEEE EEEE. EEEEE EEEEE EEEEE",
-    "EEEE. EEEEE EEEEE EEEEE EEEEE",
+    "EEEEE BBBBB EEEEE BBBBB .BBBB",
+    "EEEEE BBBBB EEEEE .EEEE EBBBB",
+    "EEEEE BBBBB .BBBB BEEEE EBBBB",
+    "EEEEE .EEEE EBBBB BEEEE EBBBB",
+    ".BBBB BEEEE EBBBB BEEEE EBBBB",
+    "EBBBB BEEEE EBBBB BEEEE E.EEE",
+    "EBBBB BEEEE EBBBB B.BBB BBEEE",
+    "EBBBB BEEEE E.EEE EEBBB BBEEE",
+    "EBBBB B.BBB BBEEE EEBBB BBEEE",
+    "E.EEE EEBBB BBEEE EEBBB BBEEE",
+    "BBEEE EEBBB BBEEE EEBBB BB.BB",
+    "BBEEE EEBBB BBEEE EE.EE EEEBB",
+    "BBEEE EEBBB BB.BB BBBEE EEEBB",
+    "BBEEE EE.EE EEEBB BBBEE EEEBB",
+    "BB.BB BBBEE EEEBB BBBEE EEEBB",
+    "EEEBB BBBEE EEEBB BBBEE EEE.E",
+    "EEEBB BBBEE EEEBB BBB.B BBBBE",
+    "EEEBB BBBEE EEE.E EEEEB BBBBE",
+    "EEEBB BBB.B BBBBE EEEEB BBBBE",
+    "EEE.E EEEEB BBBBE EEEEB BBBBE",
+    "BBBBE EEEEB BBBBE EEEEB BBBB.",
+    "BBBBE EEEEB BBBBE EEEE. EEEEE",
+    "BBBBE EEEEB BBBB. BBBBB EEEEE",
+    "BBBBE EEEE. EEEEE BBBBB EEEEE",
+    "BBBB. BBBBB EEEEE BBBBB EEEEE",
   ],
 };
 
@@ -1341,26 +1341,8 @@ function DotField({ embedded = false }) {
             viewBox={`0 0 ${gridWidth} ${gridHeight}`}
             aria-hidden="true"
           >
-            <defs>
-              <filter id="life-blob-goo">
-                <feGaussianBlur in="SourceGraphic" stdDeviation="4.5" result="blur" />
-                <feColorMatrix
-                  in="blur"
-                  mode="matrix"
-                  values="
-                    1 0 0 0 0
-                    0 1 0 0 0
-                    0 0 1 0 0
-                    0 0 0 24 -10
-                  "
-                  result="goo"
-                />
-                <feBlend in="SourceGraphic" in2="goo" />
-              </filter>
-            </defs>
-
             {activeComponents.map((component, componentIndex) => (
-              <g key={`component-${componentIndex}`} filter="url(#life-blob-goo)">
+              <g key={`component-${componentIndex}`}>
                 {component.map((dot) => (
                   <circle
                     key={dot.index}
@@ -1368,29 +1350,14 @@ function DotField({ embedded = false }) {
                     cy={dot.cy}
                     r={dotSize / 2}
                     fill={dot.fill}
-                    fillOpacity={0.72}
+                    fillOpacity={ABOUT_TILE_OPACITY}
                   />
                 ))}
               </g>
             ))}
 
             {activeComponents.map((component, componentIndex) => (
-              <g key={`component-glow-${componentIndex}`}>
-                {component.map((dot) => (
-                  <circle
-                    key={`glow-${dot.index}`}
-                    cx={dot.cx}
-                    cy={dot.cy}
-                    r={dotSize / 2}
-                    fill="none"
-                    stroke="rgba(158, 179, 194, 0.32)"
-                    strokeWidth="1"
-                    style={{
-                      filter: `drop-shadow(0 0 16px rgba(27, 59, 111, ${dot.glowAlpha}))`,
-                    }}
-                  />
-                ))}
-              </g>
+              <g key={`component-glow-${componentIndex}`} />
             ))}
           </svg>
           {cells}

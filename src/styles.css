@@ -1150,11 +1150,15 @@ button {
   outline: none;
 }
 
+.dot.is-alive:hover,
+.dot.is-alive:focus-visible {
+  background: transparent;
+  box-shadow: none;
+}
+
 .dot.is-alive {
-  background: #9eb3c2;
-  box-shadow:
-    0 0 0 1px rgba(158, 179, 194, 0.34),
-    0 0 16px rgba(27, 59, 111, 0.2);
+  background: transparent;
+  box-shadow: none;
 }
 
 @media (max-width: 760px) {
